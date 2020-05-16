@@ -56,13 +56,14 @@ class MediumModel extends EntityModel
         $properties['type'] = $properties['isImage'] ? 'image' : ($properties['isAudio'] ? 'audio' : ($properties['isVideo'] ? 'video' : ($properties['isDocument'] ? 'document' : 'file')));
         if ($properties['isImage']) {
             if ($typeOfFile === 'UploadedFile') {
-                $properties['exif'] = Image::make($file->getRealPath())->exif();
+                $image = Image::make($file->getRealPath());
             } else if ($typeOfFile === 'path') {
-                $properties['exif'] = Image::make($file)->exif();
+                $image = Image::make($file);
             }
-            if (isset($properties['exif']['COMPUTED']['Width'])) {
-                $properties['width'] = $properties['exif']['COMPUTED']['Width'];
-                $properties['height'] = $properties['exif']['COMPUTED']['Height'];
+            if ($image) {
+                $properties['width'] = $image->width();
+                $properties['height'] = $image->height();
+                $properties['exif'] = $image->exif();
             }
         } else {
             $properties['exif'] = null;
