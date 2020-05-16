@@ -1,0 +1,13 @@
+{
+    "name": "ramses/kusikusi-lib",
+    "description": "Kusikusi PHP libraries",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ramses Moreno",
+            "email": "ramses@cuatromedios.com"
+        }
+    ],
+    "require": {}
+}
