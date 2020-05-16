@@ -1,5 +1,6 @@
 {
     "name": "ramses/kusikusi-lib",
+    "version": "4.0.0-alpha5",
     "description": "Kusikusi PHP libraries",
     "type": "library",
     "license": "MIT",
@@ -9,5 +10,20 @@
             "email": "ramses@cuatromedios.com"
         }
     ],
-    "require": {}
+    "require": {
+        "php": "^7.2.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cuatromedios\\Kusikusi\\": "src/"
+        }
+    },
+    "scripts": {
+
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "optimize-autoloader": true
+    }
 }
