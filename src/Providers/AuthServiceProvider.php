@@ -2,8 +2,8 @@
 
 namespace Kusikusi\Providers;
 
-use App\Models\Authtoken;
-use App\Models\User;
+use Kusikusi\Models\Authtoken;
+use Kusikusi\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;

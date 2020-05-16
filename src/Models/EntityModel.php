@@ -3,6 +3,7 @@
 namespace Kusikusi\Models;
 
 use App\Models\Entity;
+use App\Models\Medium;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

@@ -6,7 +6,7 @@ namespace  Kusikusi\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use App\Models\User;
+use Kusikusi\Models\User;
 
 class UserController extends Controller
 {
