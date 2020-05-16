@@ -11,7 +11,10 @@
         }
     ],
     "require": {
-        "php": "^7.2.5"
+        "php": "^7.2.5",
+        "pugx/shortid-php": "^0.6.0",
+        "intervention/image": "^2.5",
+        "ankurk91/laravel-eloquent-relationships": "^1.1"
     },
     "autoload": {
         "psr-4": {
