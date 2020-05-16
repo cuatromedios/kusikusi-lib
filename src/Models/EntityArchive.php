@@ -1,9 +1,9 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Models;
+namespace Kusikusi\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Cuatromedios\Kusikusi\Models\Traits\UsesShortId;
+use Kusikusi\Models\Traits\UsesShortId;
 
 class EntityArchive extends Model
 {

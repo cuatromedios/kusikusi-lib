@@ -1,6 +1,6 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Models;
+namespace Kusikusi\Models;
 
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Support\Str;
-use Cuatromedios\Kusikusi\Models\Traits\UsesShortId;
+use Kusikusi\Models\Traits\UsesShortId;
 use PUGX\Shortid\Shortid;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract
@@ -59,7 +59,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      * Get the authokens of the User.
      */
     public function authtokens () {
-        return $this->hasMany('App\Models\Authtoken');
+        return $this->hasMany('Kusikusi\Models\Authtoken');
     }
 
     public static function boot($preset = [])

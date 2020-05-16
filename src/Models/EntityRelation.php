@@ -1,8 +1,8 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Models;
+namespace Kusikusi\Models;
 
-use Cuatromedios\Kusikusi\Models\Traits\UsesShortId;
+use Kusikusi\Models\Traits\UsesShortId;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 const TABLE = 'relations';

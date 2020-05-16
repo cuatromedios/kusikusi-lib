@@ -1,6 +1,6 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Http\Controllers;
+namespace Kusikusi\Http\Controllers;
 
 use Laravel\Lumen\Routing\Controller as BaseController;
 

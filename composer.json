@@ -1,6 +1,6 @@
 {
     "name": "cuatromedios/kusikusi-lib",
-    "version": "4.0.0-alpha6",
+    "version": "4.0.0-alpha7",
     "description": "Kusikusi PHP libraries",
     "type": "library",
     "license": "MIT",
@@ -14,11 +14,12 @@
         "php": "^7.2.5",
         "pugx/shortid-php": "^0.6.0",
         "intervention/image": "^2.5",
-        "ankurk91/laravel-eloquent-relationships": "^1.1"
+        "ankurk91/laravel-eloquent-relationships": "^1.1",
+        "ralouphie/mimey": "^2.1"
     },
     "autoload": {
         "psr-4": {
-            "Cuatromedios\\Kusikusi\\": "src/"
+            "Kusikusi\\": "src/"
         }
     },
     "scripts": {

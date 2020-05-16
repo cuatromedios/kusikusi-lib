@@ -1,7 +1,8 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Models;
+namespace Kusikusi\Models;
 
+use App\Models\Entity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ use Ankurk91\Eloquent\BelongsToOne;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PUGX\Shortid\Shortid;
-use Cuatromedios\Kusikusi\Models\Traits\UsesShortId;
+use Kusikusi\Models\Traits\UsesShortId;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -542,7 +543,7 @@ class EntityModel extends Model
     public function entities_related($kind = null)
     {
         return $this->belongsToMany('App\Models\Entity', 'relations', 'caller_entity_id', 'called_entity_id')
-            ->using('App\Models\EntityRelation')
+            ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
             ->withPivot('kind', 'position', 'depth', 'tags')
             ->when($kind, function ($q) use ($kind) {
@@ -555,7 +556,7 @@ class EntityModel extends Model
     }
     public function entities_relating($kind = null) {
         return $this->belongsToMany('App\Models\Entity', 'relations', 'called_entity_id', 'caller_entity_id')
-            ->using('App\Models\EntityRelation')
+            ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
             ->withPivot('kind', 'position', 'depth', 'tags')
             ->when($kind, function ($q) use ($kind) {
@@ -567,7 +568,7 @@ class EntityModel extends Model
             ->withTimestamps();
     }
     public function entity_relations() {
-        return $this->hasMany('App\Models\EntityRelation', 'caller_entity_id', 'id')
+        return $this->hasMany('Kusikusi\Models\EntityRelation', 'caller_entity_id', 'id')
             ->where('kind', '!=', EntityRelation::RELATION_ANCESTOR);
     }
     public function media() {
@@ -575,26 +576,26 @@ class EntityModel extends Model
     }
     public function medium($tag=null, $lang=null) {
         return $this->belongsToOne('App\Models\Medium', 'relations', 'caller_entity_id', 'called_entity_id')
-            ->using('App\Models\EntityRelation')
+            ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
             ->withPivot('kind', 'position', 'depth', 'tags')
             ->where('kind', EntityRelation::RELATION_MEDIA);
     }
     public function routes() {
-        return $this->hasMany('App\Models\Route', 'entity_id', 'id');
+        return $this->hasMany('Kusikusi\Models\Route', 'entity_id', 'id');
     }
     public function route() {
-        return $this->hasOne('App\Models\Route', 'entity_id', 'id')
+        return $this->hasOne('Kusikusi\Models\Route', 'entity_id', 'id')
             ->where('default', true);
     }
     public function contents($lang = null) {
-        return $this->hasMany('App\Models\EntityContent', 'entity_id', 'id')
+        return $this->hasMany('Kusikusi\Models\EntityContent', 'entity_id', 'id')
             ->when($lang !== null, function ($q) use ($lang) {
                 return $q->where('lang', $lang);
             });
     }
     public function archives() {
-        return $this->hasMany('App\Models\EntityArchive', 'entity_id', 'id');
+        return $this->hasMany('Kusikusi\Models\EntityArchive', 'entity_id', 'id');
     }
 
     /***********************

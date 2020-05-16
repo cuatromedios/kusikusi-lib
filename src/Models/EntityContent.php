@@ -1,8 +1,8 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Models;
+namespace Kusikusi\Models;
 
-use App\Models\Traits\UsesShortId;
+use Kusikusi\Models\Traits\UsesShortId;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class EntityContent extends Pivot

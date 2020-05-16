@@ -1,10 +1,10 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Http\Controllers;
+namespace Kusikusi\Http\Controllers;
 
 use App\Models\Entity;
 use App\Models\Medium;
-use Cuatromedios\Kusikusi\Models\EntityRelation;
+use Kusikusi\Models\EntityRelation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;

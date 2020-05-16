@@ -1,6 +1,6 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Providers;
+namespace Kusikusi\Providers;
 
 use App\Models\Authtoken;
 use App\Models\User;

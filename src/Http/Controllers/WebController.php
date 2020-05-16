@@ -1,11 +1,11 @@
 <?php
 
-namespace Cuatromedios\Kusikusi\Http\Controllers;
+namespace Kusikusi\Http\Controllers;
 
 use App\Http\Controllers\HtmlController;
 use Illuminate\Http\Request;
 use App\Models\Entity;
-use Cuatromedios\Kusikusi\Models\Route;
+use Kusikusi\Models\Route;
 use Illuminate\Support\Facades\App;
 
 class WebController extends Controller
