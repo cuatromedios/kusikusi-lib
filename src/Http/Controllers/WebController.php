@@ -53,9 +53,11 @@ class WebController extends Controller
         }
         $searchResult = $searchResult->first();
         */
+        $defaultLang = config('cms.langs', [''])[0];
+        App::setLocale($defaultLang);
         $searchResult = Route::where('path', $path)->first();
         if (!$searchResult) {
-            $request->lang = config('cms.langs', ['en_US'])[0];
+            $request->lang = $defaultLang;
             $controller = new HtmlController();
             return ($controller->error($request, 404));
         }
@@ -75,6 +77,8 @@ class WebController extends Controller
             ->where("id", $searchResult->entity_id)
             ->appendProperties($searchResult->entity_model)
             ->appendContents($searchResult->entity_model, $lang)
+            ->appendRoute($lang)
+            ->appendMedium('social')
             ->with('entities_related')
             ->with('routes');
         $entity=$entity->first();

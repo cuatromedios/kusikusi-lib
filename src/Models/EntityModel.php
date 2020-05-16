@@ -583,7 +583,8 @@ class EntityModel extends Model
             ->where('kind', EntityRelation::RELATION_MEDIA);
     }
     public function routes() {
-        return $this->hasMany('Kusikusi\Models\Route', 'entity_id', 'id');
+        return $this->hasMany('Kusikusi\Models\Route', 'entity_id', 'id')
+            ->where('default', true);
     }
     public function route() {
         return $this->hasOne('Kusikusi\Models\Route', 'entity_id', 'id')
