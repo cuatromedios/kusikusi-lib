@@ -4,6 +4,7 @@ namespace Kusikusi\Http\Controllers;
 
 use App\Http\Controllers\HtmlController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Kusikusi\Models\Route;
 use Illuminate\Support\Facades\App;
 
@@ -97,8 +98,16 @@ class WebController extends Controller
         $controller = new $controllerClassName;
         if (method_exists($controller, $model_name)) {
             $view = $controller->$model_name($request, $entity, $lang);
-            // $render = $view->render();
-            // Storage::disk('html_processed')->put($request->getPathInfo() . ($isDirectory ? '/index.html' : ''), $render);
+            $modelInstance = new $modelClassName;
+            if ($modelInstance->getCacheViewsAs()) {
+                $render = $view->render();
+                if ($modelInstance->getCacheViewsAs() === 'directory' || $path == '/'  || $path == '') {
+                    $cachePath = "$path/index.$format";
+                } else {
+                    $cachePath = "$path.$format";
+                }
+                Storage::disk('views_processed')->put($cachePath, $render);
+            }
             return $view;
         } else {
             return ($controller->error($request, 501));

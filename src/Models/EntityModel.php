@@ -30,7 +30,7 @@ class EntityModel extends Model
     protected $fillable = ['id', 'model', 'properties', 'view', 'parent_entity_id', 'is_active', 'published_at', 'unpublished_at', 'contents', 'relations'];
     protected $guarded = ['id'];
     protected $contentFields = [ "title", 'slug' ];
-
+    protected $cacheViewsAs = 'directory';
     protected $propertiesFields = [];
     private $storedContents = [];
     private $storedRelations = [];
@@ -451,11 +451,14 @@ class EntityModel extends Model
     public function getContentFields() {
         return $this->contentFields ?? [];
     }
-    public function getPropertiesFields() {
+    public function propertiesFields() {
         return $this->propertiesFields ?? [];
     }
     public function getDefaultParent() {
         return $this->defaultParent ?? null;
+    }
+    public function getCacheViewsAs() {
+        return $this->cacheViewsAs ?? null;
     }
 
     /**

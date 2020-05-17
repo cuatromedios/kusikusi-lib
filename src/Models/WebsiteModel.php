@@ -24,33 +24,48 @@ class WebsiteModel extends EntityModel
                     $join->on("relations.called_entity_id", "entities.id");
                 })
                 ->first();
-            if (!is_dir ( public_path("favicons") )) mkdir(public_path("favicons"));
             if ($faviconRelation) {
                 $id = $faviconRelation->called_entity_id;
                 $path =   $id . '/file.' . $faviconRelation->format;
                 if (Storage::disk('media_original')->exists($path)) {
-                    Image::canvas(192, 192)
+
+                    $image = Image::canvas(192, 192)
                         ->insert(Image::make(storage_path("media/$path"))->resize(192, 192))
-                        ->save(public_path("favicons/android-chrome-192x192.png"));
-                    Image::canvas(512, 512)
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/android-chrome-192x192.png", $image);
+
+                    $image = Image::canvas(512, 512)
                         ->insert(Image::make(storage_path("media/$path"))->resize(512, 512))
-                        ->save(public_path("favicons/android-chrome-512x512.png"));
-                    Image::canvas(180, 180, $entity->properties['background_color'])
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/android-chrome-512x512.png", $image);
+
+                    $image = Image::canvas(180, 180, $entity->properties['background_color'])
                         ->insert(Image::make(storage_path("media/$path"))->resize(148, 148), 'center')
-                        ->save(public_path("favicons/apple-touch-icon.png"));
-                    Image::canvas(16, 16)
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/apple-touch-icon.png", $image);
+
+                    $image = Image::canvas(16, 16)
                         ->insert(Image::make(storage_path("media/$path"))->resize(16, 16))
-                        ->save(public_path("favicons/favicon-16x16.png"));
-                    Image::canvas(32, 32)
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/favicon-16x16.png", $image);
+
+                    $image = Image::canvas(32, 32)
                         ->insert(Image::make(storage_path("media/$path"))->resize(32, 32))
-                        ->save(public_path("favicons/favicon-32x32.png"));
-                    Image::canvas(270, 270)
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/favicon-32x32.png", $image);
+
+                    $image = Image::canvas(270, 270)
                         ->insert(Image::make(storage_path("media/$path"))->resize(126, 126), 'top', null, 50)
-                        ->save(public_path("favicons/mstile-150x150.png"));
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/mstile-150x150.png", $image);
+
                     $favicon = new \PHP_ICO(storage_path("media/$path"), [[48,48]]);
-                    $favicon->save_ico(public_path("favicons/favicon.ico"));
+                    $favicon->save_ico(sys_get_temp_dir()."/favicon.ico");
+                    Storage::disk('views_processed')->putFileAs("favicons", sys_get_temp_dir()."/favicon.ico", "favicon.ico");
+
                     $favicon = new \PHP_ICO(storage_path("media/$path"), [[16,16]]);
-                    $favicon->save_ico(public_path("favicon.ico"));
+                    $favicon->save_ico(sys_get_temp_dir()."/favicon.ico");
+                    Storage::disk('views_processed')->putFileAs("", sys_get_temp_dir()."/favicon.ico", "favicon.ico");
                 }
             }
             $socialRelation = EntityRelation::select('relations.called_entity_id', 'entities.properties->format as format')
@@ -86,7 +101,7 @@ class WebsiteModel extends EntityModel
                 ->where('lang', config('cms.langs', [''])[0])
                 ->first();
             $name = $titleContent ? $titleContent->text : '';
-            file_put_contents(public_path("favicons/browserconfig.xml"), $browserconfig);
+            Storage::disk('views_processed')->put("favicons/browserconfig.xml", $browserconfig);
             $webmanifest = [
                 "name" => strip_tags($name),
                 "short_name" => strip_tags($name),
@@ -106,8 +121,7 @@ class WebsiteModel extends EntityModel
                 "background_color" => $entity->properties['background_color'],
                 "display" => "standalone"
             ];
-            file_put_contents(public_path("favicons/site.webmanifest"), json_encode($webmanifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-
+            Storage::disk('views_processed')->put("favicons/site.webmanifest", json_encode($webmanifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         });
     }
 }
