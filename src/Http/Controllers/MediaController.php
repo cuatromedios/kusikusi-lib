@@ -40,8 +40,7 @@ class MediaController extends Controller
         $entity = EntityModel::isPublished()->findOrFail($entity_id);
         // Paths
         $originalFilePath =   $entity_id . '/file.' . $entity->properties['format'];
-        $presetSettings = Config::get('media.presets.' . $preset, NULL);
-        // $publicFilePath = $entity_id . '/' .  $preset . '.' . $presetSettings['format'];
+        $presetSettings = Medium::PRESETS[$preset];
         $publicFilePath = Str::after($request->getPathInfo(), '/media');
         if ($exists = Storage::disk('media_processed')->exists($publicFilePath)) {
             return $this->getCachedImage($publicFilePath);

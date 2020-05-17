@@ -2,6 +2,8 @@
 
 namespace Kusikusi\Models;
 
+use App\Models\Medium;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
@@ -17,8 +19,11 @@ class MediumModel extends EntityModel
 
     protected function getTitleAsSlug($preset) {
         $filename = isset($this['title']) ? Str::slug($this['title']) : 'media';
-        $fileformat = Config::get("media.presets.{$preset}.format", false) ??  (isset($this['format']) ? Str::slug($this['format']) : 'bin');
+        $fileformat = Arr::get(Medium::PRESETS, "{$preset}.format", false) ??  (isset($this['format']) ? Str::slug($this['format']) : 'bin');
         return "{$filename}.{$fileformat}";
+    }
+    protected function getUrl($preset) {
+        return "/media/$this->id/$preset/{$this->getTitleAsSlug($preset)}";
     }
     protected static function getProperties($file) {
         $typeOfFile = gettype($file) === 'object' ? Str::afterLast(get_class($file), '\\') : (gettype($file) === 'string' ? 'path' : 'unknown');

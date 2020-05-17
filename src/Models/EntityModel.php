@@ -387,8 +387,8 @@ class EntityModel extends Model
                 foreach ($fields as $field) {
                     if (array_search($field, $mediumContentFields) !== false) {
                         $addedContentFields[] = $field;
-                    } else if (Arr::exists(Config::get("media.presets", []), $field)) {
-                        // TODO: Lay eagera loading? https://stackoverflow.com/questions/47222168/setappends-on-relation-which-is-being-loaded-by-with-in-laravel
+                    } else if (Arr::exists(Medium::PRESETS ?? [], $field)) {
+                        // TODO: Lazy eager loading? https://stackoverflow.com/questions/47222168/setappends-on-relation-which-is-being-loaded-by-with-in-laravel
                     } else {
                         $relation->addSelect($field);
                     }
