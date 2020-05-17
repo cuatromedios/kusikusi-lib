@@ -116,16 +116,20 @@ class EntityModel extends Model
      *
      * @param Builder $query
      * @param integer $entity_id The id of the parent entity
+     * @param string $tag Filter by one tag
      * @return Builder
      * @throws \Exception
      */
-    public function scopeChildOf($query, $entity_id)
+    public function scopeChildOf($query, $entity_id, $tag = null)
     {
-        $query->join('relations as relation_children', function ($join) use ($entity_id) {
+        $query->join('relations as relation_children', function ($join) use ($entity_id, $tag) {
             $join->on('relation_children.caller_entity_id', '=', 'entities.id')
                 ->where('relation_children.called_entity_id', '=', $entity_id)
                 ->where('relation_children.depth', '=', 1)
                 ->where('relation_children.kind', '=', EntityRelation::RELATION_ANCESTOR)
+                ->when($tag, function ($q) use ($tag) {
+                    return $q->whereJsonContains('relation_children.tags', $tag);
+                });
             ;
         })
             ->addSelect('relation_children.position as child_relation_position')
@@ -197,17 +201,21 @@ class EntityModel extends Model
      *
      * @param Builder $query
      * @param number $entity_id The id of the  entity
+     * @param string $tag Filter by tag in the relation with the parent
      * @return Builder
      * @throws \Exception
      */
-    public function scopeSiblingsOf($query, $entity_id)
+    public function scopeSiblingsOf($query, $entity_id, $tag = null)
     {
         $parent_entity = Entity::find($entity_id);
-        $query->join('relations as relation_siblings', function ($join) use ($parent_entity) {
+        $query->join('relations as relation_siblings', function ($join) use ($parent_entity, $tag) {
             $join->on('relation_siblings.caller_entity_id', '=', 'entities.id')
                 ->where('relation_siblings.called_entity_id', '=', $parent_entity->parent_entity_id)
                 ->where('relation_siblings.depth', '=', 1)
                 ->where('relation_siblings.kind', '=', EntityRelation::RELATION_ANCESTOR)
+                ->when($tag, function ($q) use ($tag) {
+                    return $q->whereJsonContains('relation_siblings.tags', $tag);
+                });
             ;
         })
             ->where('entities.id', '!=', $entity_id)
@@ -221,13 +229,17 @@ class EntityModel extends Model
      * @param  \Illuminate\Database\Eloquent\Builder $query
      * @param  string $entity_id The id of the entity calling the relations
      * @param  string $kind Filter by type of relation, if ommited all relations but 'ancestor' will be included
+     * @param  string $tag Filter by tag in relation
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeRelatedBy($query, $entity_id, $kind = null)
+    public function scopeRelatedBy($query, $entity_id, $kind = null, $tag = null)
     {
-        $query->join('relations as related_by', function ($join) use ($entity_id, $kind) {
+        $query->join('relations as related_by', function ($join) use ($entity_id, $kind, $tag) {
             $join->on('related_by.called_entity_id', '=', 'entities.id')
-                ->where('related_by.caller_entity_id', '=', $entity_id);
+                ->where('related_by.caller_entity_id', '=', $entity_id)
+                ->when($tag, function ($q) use ($tag) {
+                    return $q->whereJsonContains('related_by.tags', $tag);
+                });;
             if ($kind === null) {
                 $join->where('related_by.kind', '!=', 'ancestor');
             } else {
@@ -242,14 +254,18 @@ class EntityModel extends Model
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param string $entity_id The id of the entity calling the relations
      * @param string $kind Filter by type of relation, if ommited all relations but 'ancestor' will be included
+     * @param string $tag Filter by tag in relation
      * @return \Illuminate\Database\Eloquent\Builder
      * @throws \Exception
      */
-    public function scopeRelating($query, $entity_id, $kind = null)
+    public function scopeRelating($query, $entity_id, $kind = null, $tag = null)
     {
-        $query->join('relations as relating', function ($join) use ($entity_id, $kind) {
+        $query->join('relations as relating', function ($join) use ($entity_id, $kind, $tag) {
             $join->on('relating.caller_entity_id', '=', 'entities.id')
-                ->where('relating.called_entity_id', '=', $entity_id);
+                ->where('relating.called_entity_id', '=', $entity_id)
+                ->when($tag, function ($q) use ($tag) {
+                    return $q->whereJsonContains('relating.tags', $tag);
+                });;
             if ($kind === null) {
                 $join->where('relating.kind', '!=', 'ancestor');
             } else {
@@ -266,12 +282,15 @@ class EntityModel extends Model
      * @return Builder
      * @throws \Exception
      */
-    public function scopeMediaOf($query, $entity_id)
+    public function scopeMediaOf($query, $entity_id, $tag = null)
     {
-        $query->join('relations as relation_media', function ($join) use ($entity_id) {
+        $query->join('relations as relation_media', function ($join) use ($entity_id, $tag) {
             $join->on('relation_media.called_entity_id', '=', 'entities.id')
                 ->where('relation_media.caller_entity_id', '=', $entity_id)
-                ->where('relation_media.kind', '=', EntityRelation::RELATION_MEDIA);
+                ->where('relation_media.kind', '=', EntityRelation::RELATION_MEDIA)
+                ->when($tag, function ($q) use ($tag) {
+                    return $q->whereJsonContains('relation_media.tags', $tag);
+                });
         })
             ->addSelect( 'relation_media.position as media_position', 'relation_media.depth as media_depth', 'relation_media.tags as media_tags');
     }
@@ -283,7 +302,7 @@ class EntityModel extends Model
      * @return Builder
      */
 
-    public function scopeAppendProperties($query, $modelOrFields=null) {
+    public function scopeAppendProperties($query, $modelOrFields = null) {
         if (is_string($modelOrFields)) {
             $modelClassName = "App\\Models\\" . Str::studly($modelOrFields);
             if (class_exists($modelClassName)) {
@@ -310,7 +329,7 @@ class EntityModel extends Model
      * @return Builder
      */
 
-    public function scopeAppendContents($query, $modelOrFields=null, $lang=null) {
+    public function scopeAppendContents($query, $modelOrFields = null, $lang = null) {
         $lang = $lang ?? Config::get('cms.langs')[0] ?? '';
         if (is_string($modelOrFields)) {
             $modelClassName = "App\\Models\\".Str::studly($modelOrFields);
@@ -346,7 +365,7 @@ class EntityModel extends Model
      * @return Builder
      */
 
-    public function scopeAppendRoute($query, $lang=null) {
+    public function scopeAppendRoute($query, $lang = null) {
         $lang = $lang ?? Config::get('cms.langs')[0] ?? '';
         $query->leftJoin("routes", function ($join) use ($lang) {
             $join->on("routes.entity_id", "entities.id")
@@ -366,7 +385,7 @@ class EntityModel extends Model
      * @return Builder
      */
 
-    public function scopeAppendMedium($query, $tag=null, $fields=null, $lang=null) {
+    public function scopeAppendMedium($query, $tag = null, $fields = null, $lang = null) {
         $query->with(['medium' => function ($relation) use ($fields, $lang, $tag) {
             $relation->select('id', 'properties->format as format');
             if (isset($tag)) {
@@ -575,7 +594,7 @@ class EntityModel extends Model
     public function media() {
         return $this->entities_related(EntityRelation::RELATION_MEDIA);
     }
-    public function medium($tag=null, $lang=null) {
+    public function medium($tag = null, $lang = null) {
         return $this->belongsToOne('App\Models\Medium', 'relations', 'caller_entity_id', 'called_entity_id')
             ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
