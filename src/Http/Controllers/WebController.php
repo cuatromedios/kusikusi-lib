@@ -41,6 +41,7 @@ class WebController extends Controller
             $path = substr($path, 0, strrpos($path, "."));
         }
         $path = preg_replace('/\/index$/', '', $path);
+        if ($path === '') $path = '/';
         $filename = strtolower(pathinfo($path, PATHINFO_FILENAME));
 
         // Search for the entity is being called by its url, ignore inactive and soft deleted.
@@ -89,6 +90,10 @@ class WebController extends Controller
         $request->request->add(['lang' => $lang]);
         $model_name = $entity->model;
         $controllerClassName = "App\\Http\\Controllers\\" . ucfirst($format) . 'Controller';
+        if(!class_exists($controllerClassName)) {
+            $controller = new HtmlController;
+            return ($controller->error($request, 404));
+        }
         $controller = new $controllerClassName;
         if (method_exists($controller, $model_name)) {
             $view = $controller->$model_name($request, $entity, $lang);
