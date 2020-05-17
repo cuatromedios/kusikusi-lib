@@ -80,9 +80,10 @@ class WebsiteModel extends EntityModel
                 $id = $socialRelation->called_entity_id;
                 $path =   $id . '/file.' . $socialRelation->format;
                 if (Storage::disk('media_original')->exists($path)) {
-                    Image::canvas(1200, 1200, $entity->properties['background_color'])
+                    $image = Image::canvas(1200, 1200, $entity->properties['background_color'])
                         ->insert(Image::make(storage_path("media/$path"))->fit(1200, 1200))
-                        ->save(public_path("favicons/social.png"));
+                        ->encode('png');
+                    Storage::disk('views_processed')->put("favicons/social.png", $image);
                 }
             }
             $browserconfig = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
