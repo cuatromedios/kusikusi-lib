@@ -4,7 +4,6 @@ namespace Kusikusi\Http\Controllers;
 
 use App\Http\Controllers\HtmlController;
 use Illuminate\Http\Request;
-use App\Models\Entity;
 use Kusikusi\Models\Route;
 use Illuminate\Support\Facades\App;
 
@@ -47,7 +46,7 @@ class WebController extends Controller
         // Search for the entity is being called by its url, ignore inactive and soft deleted.
         // TODO: Is there a better way using Laravel Query builder or native
         /* $langs = config('cms.langs', ['en']);
-        $searchResult = Entity::select("id", "model")
+        $searchResult = EntityModel::select("id", "model")
             ->orWhere("properties->url", $url);
         foreach ($langs as $searchLang) {
             $searchResult->orWhere("properties->url->$searchLang", $url);
@@ -74,10 +73,11 @@ class WebController extends Controller
         // Select an entity with its properties
         $lang = $searchResult->lang;
         App::setLocale($lang);
-        $entity = Entity::select("*")
+        $modelClassName = "App\\Models\\" . ucfirst($searchResult->entity_model);
+        $entity = $modelClassName::select("*")
             ->where("id", $searchResult->entity_id)
-            ->appendProperties($searchResult->entity_model)
-            ->appendContents($searchResult->entity_model, $lang)
+            ->appendProperties()
+            ->appendContents('*', $lang)
             ->appendRoute($lang)
             ->appendMedium('social')
             ->with('entities_related')

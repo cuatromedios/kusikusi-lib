@@ -2,7 +2,7 @@
 
 namespace Kusikusi\Http\Controllers;
 
-use App\Models\Entity;
+use Kusikusi\Models\EntityModel;
 use App\Models\Medium;
 use Kusikusi\Models\EntityRelation;
 use Illuminate\Http\JsonResponse;
@@ -51,8 +51,8 @@ class EntityController extends Controller
             $modelClassName = "App\\Models\\".Str::studly(Str::singular($model_name));
             $entities = $modelClassName::query();
         } else {
-            $modelClassName = "App\\Models\\Entity";
-            $entities = Entity::query();
+            $modelClassName = "Kusikusi\\Models\\EntityModel";
+            $entities = EntityModel::query();
         }
         $lang = $request->get('lang') ?? Config::get('cms.langs')[0] ?? '';
         // Add selects
@@ -139,12 +139,12 @@ class EntityController extends Controller
         if ($validator->fails()) {
             return $validator->errors();
         }
-        $entityFound = Entity::select('id', 'model')
+        $entityFound = EntityModel::select('id', 'model')
             ->where('id', $entity_id)
             ->firstOrFail();
         $modelClassName = "App\\Models\\".Str::studly(Str::singular($entityFound->model));
         if(!class_exists('$modelClassName')) {
-            $modelClassName = "App\\Models\\Entity";
+            $modelClassName = "Kusikusi\\Models\\EntityModel";
         }
         $entity = $modelClassName::select('id');
         $lang = $request->get('lang') ?? Config::get('cms.langs')[0] ?? '';
@@ -180,9 +180,9 @@ class EntityController extends Controller
             'is_active' => 'boolean'
         ]);
         $payload = $request->only('id', 'model', 'view', 'parent_entity_id', 'published_at', 'unpublished_at', 'properties', 'contents', 'entities_related', 'is_active');
-        $entity = new Entity($payload);
+        $entity = new EntityModel($payload);
         $entity->save();
-        $createdEntity = Entity::with('contents')->find($entity->id);
+        $createdEntity = EntityModel::with('contents')->find($entity->id);
         return($createdEntity);
     }
 
@@ -229,17 +229,17 @@ class EntityController extends Controller
             return $validator->errors();
         }
         $payload = $request->only('id','model', 'view', 'parent_entity_id', 'published_at', 'unpublished_at', 'properties', 'contents', 'entities_related', 'is_active');
-        $entity = new Entity($payload);
+        $entity = new EntityModel($payload);
         $entity->save();
         $relation_payload = $request->only('called_entity_id', 'kind', 'position', 'depth', 'tags');
         $relation_payload['caller_entity_id'] = $caller_entity_id;
         $relation_payload['called_entity_id'] = $entity->id;
-        Entity::createRelation($relation_payload);
+        EntityModel::createRelation($relation_payload);
         if ($payload['model']) {
             $modelClassName = "App\\Models\\".Str::studly(Str::singular($payload['model']));
             $createdEntity = $modelClassName::appendContents('title')->with('entities_relating')->find($entity->id);
         } else {
-            $createdEntity = Entity::appendContents('title')->with('entities_relating')->find($entity->id);
+            $createdEntity = EntityModel::appendContents('title')->with('entities_relating')->find($entity->id);
 
         }
         return($createdEntity);
@@ -276,7 +276,7 @@ class EntityController extends Controller
             return $validator->errors();
         }
         $payload = $request->only('id', 'model', 'view', 'parent_entity_id', 'published_at', 'unpublished_at', 'properties', 'contents', 'entities_related', 'is_active');
-        $entity = Entity::find($entity_id);
+        $entity = EntityModel::find($entity_id);
         $entity->fill($payload);
         $entity->save();
         return($entity);
@@ -298,8 +298,8 @@ class EntityController extends Controller
         if ($validator->fails()) {
             return $validator->errors();
         }
-        Entity::where('id', $entity_id)->delete();
-        $entity = Entity::select('id', 'deleted_at')->withTrashed()->find($entity_id);
+        EntityModel::where('id', $entity_id)->delete();
+        $entity = EntityModel::select('id', 'deleted_at')->withTrashed()->find($entity_id);
         $entity->makeVisible('deleted_at');
         return($entity);
     }
@@ -336,7 +336,7 @@ class EntityController extends Controller
         }
         $payload = $request->only( 'called_entity_id', 'kind', 'position', 'depth', 'tags');
         $payload['caller_entity_id'] = $caller_entity_id;
-        Entity::createRelation($payload);
+        EntityModel::createRelation($payload);
         $relation = EntityRelation::where('caller_entity_id', $payload['caller_entity_id'])
             ->where('called_entity_id', $payload['called_entity_id'])
             ->where('kind', $payload['kind'])

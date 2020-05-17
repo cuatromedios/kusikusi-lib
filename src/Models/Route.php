@@ -23,6 +23,6 @@ class Route extends Model
         return 'route_id';
     }
     public function entity () {
-        return $this->belongsTo('App\Models\Entity');
+        return $this->belongsTo('Kusikusi\Models\EntityModel');
     }
 }

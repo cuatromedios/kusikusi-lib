@@ -2,7 +2,7 @@
 
 namespace Kusikusi\Http\Controllers;
 
-use App\Models\Entity;
+use Kusikusi\Models\EntityModel;
 use App\Models\Medium;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,7 +37,7 @@ class MediaController extends Controller
     {
 
         // TODO: Review if the user can read the media
-        $entity = Entity::isPublished()->findOrFail($entity_id);
+        $entity = EntityModel::isPublished()->findOrFail($entity_id);
         // Paths
         $originalFilePath =   $entity_id . '/file.' . $entity->properties['format'];
         $presetSettings = Config::get('media.presets.' . $preset, NULL);
@@ -125,7 +125,7 @@ class MediaController extends Controller
      */
     public function upload(Request $request, $entity_id)
     {
-        $entity = Entity::findOrFail($entity_id);
+        $entity = EntityModel::findOrFail($entity_id);
         function processFile($id, $function, UploadedFile $file)
         {
             $properties = Medium::getProperties($file);

@@ -2,7 +2,6 @@
 
 namespace Kusikusi\Models;
 
-use App\Models\Entity;
 use App\Models\Medium;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -207,7 +206,7 @@ class EntityModel extends Model
      */
     public function scopeSiblingsOf($query, $entity_id, $tag = null)
     {
-        $parent_entity = Entity::find($entity_id);
+        $parent_entity = EntityModel::find($entity_id);
         $query->join('relations as relation_siblings', function ($join) use ($parent_entity, $tag) {
             $join->on('relation_siblings.caller_entity_id', '=', 'entities.id')
                 ->where('relation_siblings.called_entity_id', '=', $parent_entity->parent_entity_id)
@@ -298,23 +297,19 @@ class EntityModel extends Model
      * Scope a query to flat the properties json column.
      *
      * @param  Builder $query
-     * @param  string $modelOrFields The id of the model or an array of fields
+     * @param  string $fields The id of the model or an array of fields
      * @return Builder
      */
 
-    public function scopeAppendProperties($query, $modelOrFields = null) {
-        if (is_string($modelOrFields)) {
-            $modelClassName = "App\\Models\\" . Str::studly($modelOrFields);
-            if (class_exists($modelClassName)) {
-                $modelInstance = new $modelClassName();
-                $propertiesFields = $modelInstance->getPropertiesFields();
-            } else {
-                $propertiesFields = [];
-            }
-        } else if (is_array($modelOrFields)) {
-            $propertiesFields = $modelOrFields;
+    public function scopeAppendProperties($query, $fields = null) {
+        if ((is_string($fields) && $fields === '*') || $fields === null) {
+            $propertiesFields = $this->propertiesFields;
+        } else if (is_string($fields)) {
+            $propertiesFields = [ $fields ];
+        } else if (is_array($fields)) {
+            $propertiesFields = $fields;
         } else {
-            $propertiesFields = $modelOrFields;
+            throw new HttpException(422, 'scopeAppendContents: $fields params must be an array, string or null');
         }
         foreach ($propertiesFields as $field) {
             $query->addSelect("properties->$field as $field");
@@ -324,26 +319,21 @@ class EntityModel extends Model
      * Scope a query to flat the contents.
      *
      * @param  Builder $query
-     * @param  string $modelOrFields The id of the model or an array of fields
+     * @param  string|array $fields The field name or names
      * @param  string $lang The lang to use or null to use the default
      * @return Builder
      */
 
-    public function scopeAppendContents($query, $modelOrFields = null, $lang = null) {
+    public function scopeAppendContents($query, $fields = null, $lang = null) {
         $lang = $lang ?? Config::get('cms.langs')[0] ?? '';
-        if (is_string($modelOrFields)) {
-            $modelClassName = "App\\Models\\".Str::studly($modelOrFields);
-            if (class_exists($modelClassName)) {
-                $modelInstance =  new $modelClassName();
-                $contentFields = $modelInstance->getContentFields();
-            } else {
-                $contentFields = [];
-            }
-
-        } else if (is_array($modelOrFields)) {
-            $contentFields = $modelOrFields;
-        } else {
+        if ((is_string($fields) && $fields === '*') || $fields === null) {
             $contentFields = $this->contentFields;
+        } else if (is_array($fields)) {
+            $contentFields = $fields;
+        } else if (is_string($fields)) {
+            $contentFields = [ $fields ];
+        } else {
+            throw new HttpException(422, 'scopeAppendContents: $fields params must be an array, string or null');
         }
         foreach ($contentFields as $field) {
             $rand = rand(10000, 99999);
@@ -562,7 +552,7 @@ class EntityModel extends Model
      */
     public function entities_related($kind = null)
     {
-        return $this->belongsToMany('App\Models\Entity', 'relations', 'caller_entity_id', 'called_entity_id')
+        return $this->belongsToMany(  'Kusikusi\Models\EntityModel', 'relations', 'caller_entity_id', 'called_entity_id')
             ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
             ->withPivot('kind', 'position', 'depth', 'tags')
@@ -575,7 +565,7 @@ class EntityModel extends Model
             ->withTimestamps();
     }
     public function entities_relating($kind = null) {
-        return $this->belongsToMany('App\Models\Entity', 'relations', 'called_entity_id', 'caller_entity_id')
+        return $this->belongsToMany(  'Kusikusi\Models\EntityModel', 'relations', 'called_entity_id', 'caller_entity_id')
             ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
             ->withPivot('kind', 'position', 'depth', 'tags')
@@ -664,7 +654,7 @@ class EntityModel extends Model
         self::incrementRelationsVersion($entity_id);
     }
     private static function incrementTreeVersion($entity_id) {
-        $ancestors = Entity::select('id')->ancestorOf($entity_id)->get();
+        $ancestors = EntityModel::select('id')->ancestorOf($entity_id)->get();
         if (!empty($ancestors)) {
             foreach ($ancestors as $ancestor) {
                 $e = DB::table('entities')
@@ -675,14 +665,14 @@ class EntityModel extends Model
         }
     }
     private static function incrementRelationsVersion($entity_id) {
-        $relating = Entity::select('id')->relating($entity_id)->get();
+        $relating = EntityModel::select('id')->relating($entity_id)->get();
         if (!empty($relating)) {
             foreach ($relating as $entityRelating) {
                 $e = DB::table('entities')
                     ->where('id', $entityRelating['id']);
                 $e->increment('version_relations');
                 $e->increment('version_full');
-                $ancestors = Entity::select('id')->ancestorOf($entityRelating->id)->get();
+                $ancestors = EntityModel::select('id')->ancestorOf($entityRelating->id)->get();
                 if (!empty($ancestors)) {
                     foreach ($ancestors as $ancestor) {
                         $e = DB::table('entities')
@@ -700,7 +690,7 @@ class EntityModel extends Model
     protected static function boot()
     {
         $modelName = Str::camel(Str::afterLast(get_called_class(), '\\'));
-        if ($modelName !== 'entity') {
+        if ($modelName !== 'entityModel') {
             static::addGlobalScope($modelName, function (Builder $builder) use ($modelName) {
                 $builder->where('model', $modelName);
             });
@@ -711,7 +701,7 @@ class EntityModel extends Model
             if (!isset($entity[$entity->getKeyName()])) {
                 do {
                     $id = Shortid::generate(Config::get('cms.shortIdLength', 10));
-                    $found_duplicate = Entity::where($entity->getKeyName(), $id)->first();
+                    $found_duplicate = EntityModel::where($entity->getKeyName(), $id)->first();
                 } while (!!$found_duplicate);
                 $entity->setAttribute($entity->getKeyName(), $id);
             } else {
@@ -760,7 +750,7 @@ class EntityModel extends Model
             if ($entity->getStoredRelations() && count($entity->getStoredRelations()) > 0) {
                 $entity->replaceRelations($entity->getStoredRelations());
             }
-            $parentEntity = Entity::with('routes')->find($entity['parent_entity_id']);
+            $parentEntity = EntityModel::with('routes')->find($entity['parent_entity_id']);
             // Create the ancestors relations
             if ($parentEntity && isset($entity['parent_entity_id']) && $entity['parent_entity_id'] != NULL && $entity->isDirty('parent_entity_id')) {
                 EntityRelation::where("caller_entity_id", $entity->id)->where('kind', EntityRelation::RELATION_ANCESTOR)->delete();
@@ -771,7 +761,7 @@ class EntityModel extends Model
                     "depth" => 1
                 ]);
                 $depth = 2;
-                $ancestors = Entity::select('id')->ancestorOf($parentEntity->id)->orderBy('ancestor_relation_depth')->get();
+                $ancestors = EntityModel::select('id')->ancestorOf($parentEntity->id)->orderBy('ancestor_relation_depth')->get();
                 foreach ($ancestors as $ancestor) {
                     EntityRelation::create([
                         "caller_entity_id" => $entity->id,

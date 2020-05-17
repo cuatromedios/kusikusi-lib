@@ -13,7 +13,7 @@ class EntityArchive extends Model
     protected $fillable = ["entity_id", "version", "payload"];
 
     public function entity () {
-        return $this->belongsTo('App\Models\Entity');
+        return $this->belongsTo('Kusikusi\Models\EntityModel');
     }
 
     public static function archive($entity_id) {
