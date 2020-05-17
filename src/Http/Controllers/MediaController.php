@@ -124,7 +124,7 @@ class MediaController extends Controller
      */
     public function upload(Request $request, $entity_id)
     {
-        $entity = EntityModel::findOrFail($entity_id);
+        $medium = Medium::findOrFail($entity_id);
         function processFile($id, $function, UploadedFile $file)
         {
             $properties = Medium::getProperties($file);
@@ -137,11 +137,12 @@ class MediaController extends Controller
         $properties = NULL;
         if ($request->hasFile('thumb') && $request->file('thumb')->isValid()) {
             $properties = processFile($entity_id, 'thumb', $request->file('thumb'));
+            $medium->touch();
         }
         if ($request->hasFile('file') && $request->file('file')->isValid()) {
             $properties = processFile($entity_id, 'file', $request->file('file'));
-            $entity['properties'] = array_merge($entity['properties'], $properties);
-            $entity->save();
+            $medium['properties'] = array_merge($medium['properties'], $properties);
+            $medium->save();
         }
         if ($properties === NULL) {
             return(JsonResponse::create(["error" => "No files found in the request or exceed server setting of file size"], 422));
