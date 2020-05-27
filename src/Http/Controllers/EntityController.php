@@ -73,8 +73,8 @@ class EntityController extends Controller
         });
         // Filters
         $entities = $entities->when($request->get('of-model'), function ($q) use ($request) {
-                return $q->ofModel($request->get('of-model'));
-            })
+            return $q->ofModel($request->get('of-model'));
+        })
             ->when($request->exists('only-published') && ($request->get('only-published') === 'true' || $request->get('only-published') === ''), function ($q) use ($request) {
                 return $q->isPublished();
             })
@@ -135,7 +135,7 @@ class EntityController extends Controller
     {
         $validator = Validator::make(get_defined_vars(),
             ['entity_id' => self::ID_RULE,
-            'entity_id' => 'exists:entities,id']);
+                'entity_id' => 'exists:entities,id']);
         if ($validator->fails()) {
             return $validator->errors();
         }
@@ -180,7 +180,9 @@ class EntityController extends Controller
             'is_active' => 'boolean'
         ]);
         $payload = $request->only('id', 'model', 'view', 'parent_entity_id', 'published_at', 'unpublished_at', 'properties', 'contents', 'entities_related', 'is_active');
-        $entity = new EntityModel($payload);
+        $modelClassName = "App\\Models\\".Str::studly(Str::singular($payload['model']));
+
+        $entity = new $modelClassName($payload);
         $entity->save();
         $createdEntity = EntityModel::with('contents')->find($entity->id);
         return($createdEntity);
@@ -223,8 +225,8 @@ class EntityController extends Controller
             'depth' => 'integer'
         ]);
         $validator = Validator::make(get_defined_vars(),
-        ['caller_entity_id' => self::ID_RULE,
-        'caller_entity_id' => 'exists:entities,id']);
+            ['caller_entity_id' => self::ID_RULE,
+                'caller_entity_id' => 'exists:entities,id']);
         if ($validator->fails()) {
             return $validator->errors();
         }
@@ -271,12 +273,17 @@ class EntityController extends Controller
         ]);
         $validator = Validator::make(get_defined_vars(),
             ['entity_id' => self::ID_RULE,
-            'entity_id' => 'exists:entities,id']);
+                'entity_id' => 'exists:entities,id']);
         if ($validator->fails()) {
             return $validator->errors();
         }
         $payload = $request->only('id', 'model', 'view', 'parent_entity_id', 'published_at', 'unpublished_at', 'properties', 'contents', 'entities_related', 'is_active');
-        $entity = EntityModel::find($entity_id);
+        if (isset($payload['model'])) {
+            $modelClassName = "App\\Models\\".Str::studly(Str::singular($payload['model']));
+            $entity = $modelClassName::find($entity_id);
+        } else {
+            $entity = EntityModel::find($entity_id);
+        }
         $entity->fill($payload);
         $entity->save();
         return($entity);
@@ -358,11 +365,11 @@ class EntityController extends Controller
      */
     public function deleteRelation(Request $request, $caller_entity_id, $called_entity_id, $kind)
     {
-       $validator = Validator::make(get_defined_vars(),
-           [
-            'caller_entity_id' => self::ID_RULE,
-            'called_entity_id' => self::ID_RULE,
-            'kind' => 'required|string|max:25'
+        $validator = Validator::make(get_defined_vars(),
+            [
+                'caller_entity_id' => self::ID_RULE,
+                'called_entity_id' => self::ID_RULE,
+                'kind' => 'required|string|max:25'
             ]);
         if ($validator->fails()) {
             return $validator->errors();
@@ -432,42 +439,42 @@ class EntityController extends Controller
         $query->when(!$request->exists('select') && !$request->exists('order-by'), function ($q) use ($request) {
             return $q->select('entities.*');
         })
-        ->when($request->get('select') || $request->get('order-by'), function ($q) use ($request, $lang, $modelClassName) {
-            $selects = explode(',', $request->get('select'));
-            $ordersBy = explode(',', $request->get('order-by'));
-            foreach (array_merge($selects) as $select) {
-                $select = explode(":", $select)[0];
-                if (!in_array($select, $this->addedSelects)) {
-                    $appendProperties = [];
-                    $appendContents = [];
-                    if (Str::startsWith( $select, 'properties.')) {
-                        $appendProperties[] = Str::after($select, '.');
-                    } else if (Str::startsWith( $select, 'contents.')) {
-                        $contentsParts = $this->getParts($select);
-                        foreach ($contentsParts['fields'] as $field) {
-                            $appendContents[] = $field;
+            ->when($request->get('select') || $request->get('order-by'), function ($q) use ($request, $lang, $modelClassName) {
+                $selects = explode(',', $request->get('select'));
+                $ordersBy = explode(',', $request->get('order-by'));
+                foreach (array_merge($selects) as $select) {
+                    $select = explode(":", $select)[0];
+                    if (!in_array($select, $this->addedSelects)) {
+                        $appendProperties = [];
+                        $appendContents = [];
+                        if (Str::startsWith( $select, 'properties.')) {
+                            $appendProperties[] = Str::after($select, '.');
+                        } else if (Str::startsWith( $select, 'contents.')) {
+                            $contentsParts = $this->getParts($select);
+                            foreach ($contentsParts['fields'] as $field) {
+                                $appendContents[] = $field;
+                            }
+                        } else if ($select === "route") {
+                            $q->appendRoute($lang);
+                        } else if ($select === "contents") {
+                            $modelInstance =  new $modelClassName();
+                            $appendContents = array_merge($appendContents, $modelInstance->getContentFields()) ;
+                        } else if (Str::startsWith( $select, 'medium')) {
+                            $q->appendMedium(null, null, $lang);
+                        } else if ($select) {
+                            $q->addSelect($select);
                         }
-                    } else if ($select === "route") {
-                        $q->appendRoute($lang);
-                    } else if ($select === "contents") {
-                        $modelInstance =  new $modelClassName();
-                        $appendContents = array_merge($appendContents, $modelInstance->getContentFields()) ;
-                    } else if (Str::startsWith( $select, 'medium')) {
-                        $q->appendMedium(null, null, $lang);
-                    } else if ($select) {
-                        $q->addSelect($select);
+                        if (count($appendProperties) > 0) {
+                            $q->appendProperties($appendProperties);
+                        }
+                        if (count($appendContents) > 0) {
+                            $q->appendContents($appendContents, $lang);
+                        }
+                        $this->addedSelects[] = $select;
                     }
-                    if (count($appendProperties) > 0) {
-                        $q->appendProperties($appendProperties);
-                    }
-                    if (count($appendContents) > 0) {
-                        $q->appendContents($appendContents, $lang);
-                    }
-                    $this->addedSelects[] = $select;
                 }
-            }
-            return $q;
-        });
+                return $q;
+            });
         return $query;
     }
 
@@ -481,20 +488,20 @@ class EntityController extends Controller
     private function addRelations($query, $request) {
         // Selects
         $query->when($request->get('with'), function ($q) use ($request) {
-                $relations = explode(',', $request->get('with'));
-                foreach ($relations as $relation) {
-                    $relationParts = $this->getParts($relation);
-                    if (!in_array($relation, $this->calledRelations)) {
-                        if ($relationParts['relation'] === 'medium') {
-                            $q->appendMedium($relationParts['param'], $relationParts['fields'], $request->lang);
-                        } else {
-                            $q->with($relationParts['relation']);
-                        }
-                        $this->calledRelations[] = $relationParts['relation'];
-                    };
-                }
-                return $q;
-            });
+            $relations = explode(',', $request->get('with'));
+            foreach ($relations as $relation) {
+                $relationParts = $this->getParts($relation);
+                if (!in_array($relation, $this->calledRelations)) {
+                    if ($relationParts['relation'] === 'medium') {
+                        $q->appendMedium($relationParts['param'], $relationParts['fields'], $request->lang);
+                    } else {
+                        $q->with($relationParts['relation']);
+                    }
+                    $this->calledRelations[] = $relationParts['relation'];
+                };
+            }
+            return $q;
+        });
         return $query;
     }
 
@@ -507,9 +514,9 @@ class EntityController extends Controller
         $param = $partsParam[1] ?? null;
         $object = array_shift($partsFields);
         return [
-          "relation" => $object,
-          "fields" => $partsFields,
-          "param" => $param
+            "relation" => $object,
+            "fields" => $partsFields,
+            "param" => $param
         ];
     }
 
