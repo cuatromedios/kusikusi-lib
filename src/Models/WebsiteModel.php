@@ -91,12 +91,14 @@ class WebsiteModel extends EntityModel
                 Storage::disk('views_processed')->put("favicons/social.png", $image);
             }
         }
+        $theme_color = isset($entity->properties['theme_color']) ? $entity->properties['theme_color'] : "#000000";
+        $background_color = isset($entity->properties['theme_color']) ? $entity->properties['theme_color'] : "#ffffff";
         $browserconfig = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <browserconfig>
     <msapplication>
         <tile>
             <square150x150logo src=\"/favicons/mstile-150x150.png\"/>
-            <TileColor>".strip_tags($entity->properties['theme_color'])."</TileColor>
+            <TileColor>".strip_tags($theme_color)."</TileColor>
         </tile>
     </msapplication>
 </browserconfig>
@@ -123,8 +125,8 @@ class WebsiteModel extends EntityModel
                     "type" => "image/png"
                 ]
             ],
-            "theme_color" => $entity->properties['theme_color'],
-            "background_color" => $entity->properties['background_color'],
+            "theme_color" => $theme_color,
+            "background_color" => $background_color,
             "display" => "standalone"
         ];
         Storage::disk('views_processed')->put("favicons/site.webmanifest", json_encode($webmanifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));

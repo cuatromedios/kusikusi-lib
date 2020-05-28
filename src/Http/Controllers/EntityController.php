@@ -239,9 +239,9 @@ class EntityController extends Controller
         EntityModel::createRelation($relation_payload);
         if ($payload['model']) {
             $modelClassName = "App\\Models\\".Str::studly(Str::singular($payload['model']));
-            $createdEntity = $modelClassName::appendContents('title')->with('entities_relating')->find($entity->id);
+            $createdEntity = $modelClassName::select('*')->appendContents('title')->with('entities_relating')->find($entity->id);
         } else {
-            $createdEntity = EntityModel::appendContents('title')->with('entities_relating')->find($entity->id);
+            $createdEntity = EntityModel::select('*')->appendContents('title')->with('entities_relating')->find($entity->id);
 
         }
         return($createdEntity);
