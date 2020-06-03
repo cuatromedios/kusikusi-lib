@@ -19,11 +19,15 @@ class MediumModel extends EntityModel
 
     protected function getTitleAsSlug($preset) {
         $filename = isset($this['title']) ? Str::slug($this['title']) : 'media';
-        $fileformat = Arr::get(Medium::PRESETS, "{$preset}.format", false) ??  (isset($this['format']) ? Str::slug($this['format']) : 'bin');
+        $fileformat = Arr::get(Medium::PRESETS, "{$preset}.format", (isset($this->properties['format']) ? Str::slug($this->properties['format']) : 'bin'));
         return "{$filename}.{$fileformat}";
     }
     protected function getUrl($preset) {
-        return "/media/$this->id/$preset/{$this->getTitleAsSlug($preset)}";
+        if ((isset($this->properties['isWebImage']) && $this->properties['isWebImage'] && $this->properties['format'] !== 'svg') || $preset == 'original') {
+            return "/media/$this->id/$preset/{$this->getTitleAsSlug($preset)}";
+        } else {
+            return null;
+        }
     }
     protected static function getProperties($file) {
         $typeOfFile = gettype($file) === 'object' ? Str::afterLast(get_class($file), '\\') : (gettype($file) === 'string' ? 'path' : 'unknown');
@@ -50,8 +54,8 @@ class MediumModel extends EntityModel
             'mimeType' => $mimeType,
             'originalName' => $originalName,
             'size' => $size,
-            'isWebImage' => array_search(strtolower($format), config('media.formats.webImages', ['jpeg', 'jpg', 'png', 'gif'])) !== false,
-            'isImage' => array_search(strtolower($format), config('media.formats.images', ['jpeg', 'jpg', 'png', 'gif', 'tif', 'tiff', 'iff', 'bmp', 'psd'])) !== false,
+            'isWebImage' => array_search(strtolower($format), config('media.formats.webImages', ['jpeg', 'jpg', 'png', 'gif', 'svg'])) !== false,
+            'isImage' => array_search(strtolower($format), config('media.formats.images', ['jpeg', 'jpg', 'png', 'gif', 'tif', 'tiff', 'iff', 'bmp', 'psd', 'svg'])) !== false,
             'isAudio' => array_search(strtolower($format), config('media.formats.audios', ['mp3', 'wav', 'aiff', 'aac', 'oga', 'pcm', 'flac'])) !== false,
             'isWebAudio' => array_search(strtolower($format), config('media.formats.webAudios', ['mp3', 'oga'])) !== false,
             'isVideo' => array_search(strtolower($format), config('media.formats.videos', ['mov', 'mp4', 'qt', 'avi', 'mpe', 'mpeg', 'ogg', 'm4p', 'm4v', 'flv', 'wmv'])) !== false,
@@ -59,7 +63,7 @@ class MediumModel extends EntityModel
             'isDocument' => array_search(strtolower($format), config('media.formats.documents', ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'htm', 'html', 'txt', 'rtf', 'csv', 'pps', 'ppsx', 'odf', 'key', 'pages', 'numbers'])) !== false
         ];
         $properties['type'] = $properties['isImage'] ? 'image' : ($properties['isAudio'] ? 'audio' : ($properties['isVideo'] ? 'video' : ($properties['isDocument'] ? 'document' : 'file')));
-        if ($properties['isImage']) {
+        if ($properties['isImage'] && $format !== 'svg') {
             if ($typeOfFile === 'UploadedFile') {
                 $image = Image::make($file->getRealPath());
             } else if ($typeOfFile === 'path') {

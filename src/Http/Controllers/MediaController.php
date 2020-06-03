@@ -40,13 +40,13 @@ class MediaController extends Controller
         $entity = EntityModel::isPublished()->findOrFail($entity_id);
         // Paths
         $originalFilePath =   $entity_id . '/file.' . $entity->properties['format'];
-        $presetSettings = Medium::PRESETS[$preset];
+        $presetSettings = Medium::PRESETS[$preset] ?? 'null';
         $publicFilePath = Str::after($request->getPathInfo(), '/media');
         if ($exists = Storage::disk('media_processed')->exists($publicFilePath)) {
             return $this->getCachedImage($publicFilePath);
         }
 
-        if (NULL === $presetSettings) {
+        if (NULL === $presetSettings && $preset !== 'original') {
             abort(404, "No media preset '$preset' found");
         }
 
@@ -54,15 +54,12 @@ class MediaController extends Controller
             abort(404, 'File for medium ' . $originalFilePath . ' not found');
         }
 
-        $filedata = Storage::disk('media_original')->get($originalFilePath);
-        if (array_search($entity->properties['format'], ['jpg', 'png', 'gif']) === FALSE) {
-            return new Response(
-                $filedata,  200,
-                [
-                    'Content-Type' => Storage::disk('media_original')->getMimeType($originalFilePath),
-                    'Content-Length' => Storage::disk('media_original')->size($originalFilePath)
-                ]
-            );
+        if (array_search($entity->properties['format'], ['jpg', 'png', 'gif']) === FALSE || $preset === 'original') {
+            $headers = [];
+            if ($entity->properties['format'] === 'svg') {
+                $headers = ['Content-Type' => 'image/svg+xml'];
+            }
+            return Storage::disk('media_original')->response($originalFilePath, null, $headers);
         }
 
         // Set default values if not set
@@ -77,6 +74,7 @@ class MediaController extends Controller
 
 
         // The fun
+        $filedata = Storage::disk('media_original')->get($originalFilePath);
         $image = Image::make($filedata);
         if ($presetSettings['scale'] === 'cover') {
             $image->fit($presetSettings['width'], $presetSettings['height'], NULL, $presetSettings['alignment']);
@@ -102,14 +100,7 @@ class MediaController extends Controller
         return $this->getCachedImage($publicFilePath);
     }
     private function getCachedImage($publicFilePath) {
-        $cachedImage = Storage::disk('media_processed')->get($publicFilePath);
-        return new Response(
-            $cachedImage,  200,
-            [
-                'Content-Type' => Storage::disk('media_processed')->getMimeType($publicFilePath),
-                'Content-Length' => Storage::disk('media_processed')->size($publicFilePath)
-            ]
-        );
+        return Storage::disk('media_processed')->response($publicFilePath);
     }
 
     /**
@@ -141,6 +132,13 @@ class MediaController extends Controller
         }
         if ($request->hasFile('file') && $request->file('file')->isValid()) {
             $properties = processFile($entity_id, 'file', $request->file('file'));
+            if (isset($properties['exif'])) {
+                foreach ($properties['exif'] as $prop => $value) {
+                    if (Str::startsWith($prop, "UndefinedTag")) {
+                        unset($properties['exif'][$prop]);
+                    }
+                }
+            }
             $medium['properties'] = array_merge($medium['properties'], $properties);
             $medium->save();
         }
