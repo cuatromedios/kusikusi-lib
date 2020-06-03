@@ -23,11 +23,15 @@ class MediumModel extends EntityModel
         return "{$filename}.{$fileformat}";
     }
     protected function getUrl($preset) {
-        if ((isset($this->properties['isWebImage']) && $this->properties['isWebImage'] && $this->properties['format'] !== 'svg') || $preset == 'original') {
-            return "/media/$this->id/$preset/{$this->getTitleAsSlug($preset)}";
-        } else {
-            return null;
+        if (isset($this->properties['format'])) {
+            if ($this->properties['format'] === 'svg') {
+                $preset = 'original';
+            }
         }
+        if ((isset($this->properties['isWebImage']) && $this->properties['isWebImage']) || $preset == 'original') {
+            return "/media/$this->id/$preset/{$this->getTitleAsSlug($preset)}";
+        }
+        return null;
     }
     protected static function getProperties($file) {
         $typeOfFile = gettype($file) === 'object' ? Str::afterLast(get_class($file), '\\') : (gettype($file) === 'string' ? 'path' : 'unknown');
