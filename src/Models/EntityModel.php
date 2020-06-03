@@ -375,30 +375,13 @@ class EntityModel extends Model
      * @return Builder
      */
 
-    public function scopeAppendMedium($query, $tag = null, $fields = null, $lang = null) {
-        $query->with(['medium' => function ($relation) use ($fields, $lang, $tag) {
-            $relation->select('id', 'properties->format as format');
+    public function scopeAppendMedium($query, $tag = null, $lang = null) {
+        $query->with(['medium' => function ($relation) use ($lang, $tag) {
+            $relation->select('id', 'properties', 'properties->format as format');
             if (isset($tag)) {
                 $relation->whereJsonContains('tags', $tag);
             }
-            $mediumContentFields = (new Medium())->getContentFields();
-            $addedContentFields = [];
-            if (is_array($fields)) {
-                foreach ($fields as $field) {
-                    if (array_search($field, $mediumContentFields) !== false) {
-                        $addedContentFields[] = $field;
-                    } else if (Arr::exists(Medium::PRESETS ?? [], $field)) {
-                        // TODO: Lazy eager loading? https://stackoverflow.com/questions/47222168/setappends-on-relation-which-is-being-loaded-by-with-in-laravel
-                    } else {
-                        $relation->addSelect($field);
-                    }
-                }
-            }
-            if (count($addedContentFields) > 0) {
-                $relation->appendContents($addedContentFields, $lang);
-            } else {
-                $relation->appendContents(['title'], $lang);
-            }
+            $relation->appendContents(['title'], $lang);
         }]);
     }
 
