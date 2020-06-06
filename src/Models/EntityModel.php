@@ -244,7 +244,7 @@ class EntityModel extends Model
             } else {
                 $join->where('related_by.kind', '=', $kind);
             }
-        })->addSelect('related_by.kind as relation_kind', 'related_by.position as relation_position', 'related_by.depth as relation_depth', 'related_by.tags as relation_tags');
+        })->addSelect('related_by.relation_id as relation_id', 'related_by.kind as relation_kind', 'related_by.position as relation_position', 'related_by.depth as relation_depth', 'related_by.tags as relation_tags');
     }
 
     /**
