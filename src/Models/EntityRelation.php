@@ -14,6 +14,7 @@ class EntityRelation extends Pivot
     const RELATION_ANCESTOR = 'ancestor';
     const RELATION_MEDIA = 'medium';
     const RELATION_UNDEFINED = 'relation';
+    const RELATION_MENU = 'menu';
     const TABLE = TABLE;
 
     protected $table = TABLE;
