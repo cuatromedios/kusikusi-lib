@@ -67,7 +67,8 @@ class MediaController extends Controller
         data_fill($presetSettings, 'height', 256); // int
         data_fill($presetSettings, 'scale', 'cover'); // contain | cover | fill
         data_fill($presetSettings, 'alignment', 'center'); // only if scale is 'cover' or 'contain' with background: top-left | top | top-right | left | center | right | bottom-left | bottom | bottom-right
-        data_fill($presetSettings, 'background', 'crop'); // only if scale is 'contain': crop | #HEXCODE
+        data_fill($presetSettings, 'background', null); // only if scale is 'contain': crop | #HEXCODE
+        data_fill($presetSettings, 'crop', false); // only if scale is 'contain': true | false
         data_fill($presetSettings, 'quality', 80); // 0 - 100 for jpg | 1 - 8, (bits) for gif | 1 - 8, 24 (bits) for png
         data_fill($presetSettings, 'format', 'jpg'); // jpg | gif | png
         data_fill($presetSettings, 'effects', []); // ['colorize' => [50, 0, 0], 'grayscale' => [] ]
@@ -76,6 +77,10 @@ class MediaController extends Controller
         // The fun
         $filedata = Storage::disk('media_original')->get($originalFilePath);
         $image = Image::make($filedata);
+        if ($presetSettings['background'] !== null) {
+            $canvas = Image::canvas($image->width(), $image->height(), $presetSettings['background']);
+            $image = $canvas->insert($image);
+        }
         if ($presetSettings['scale'] === 'cover') {
             $image->fit($presetSettings['width'], $presetSettings['height'], NULL, $presetSettings['alignment']);
         } elseif ($presetSettings['scale'] === 'fill') {
@@ -84,8 +89,7 @@ class MediaController extends Controller
             $image->resize($presetSettings['width'], $presetSettings['height'], function ($constraint) {
                 $constraint->aspectRatio();
             });
-            $matches = preg_match('/#([a-f0-9]{3}){1,2}\b/i', $presetSettings['background'], $matches);
-            if ($matches) {
+            if ($presetSettings['crop']) {
                 $image->resizeCanvas($presetSettings['width'], $presetSettings['height'], $presetSettings['alignment'], false, $presetSettings['background']);
             }
         }
