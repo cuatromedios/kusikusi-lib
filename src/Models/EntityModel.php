@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Ankurk91\Eloquent\BelongsToOne;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Kusikusi\Extensions\EntityCollection;
 use PUGX\Shortid\Shortid;
 use Kusikusi\Models\Traits\UsesShortId;
 use Illuminate\Support\Facades\Config;
@@ -34,6 +35,16 @@ class EntityModel extends Model
     protected $propertiesFields = [];
     private $storedContents = [];
     private $storedRelations = [];
+
+    /**
+     * Create a new Eloquent Collection instance.
+     *
+     * @param  array  $models
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function newCollection(array $models = []) {
+        return new EntityCollection($models);
+    }
 
     /**
      * @var array A list of columns from the entities tables and other joins needs to be casted
