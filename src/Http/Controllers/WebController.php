@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Kusikusi\Models\Route;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
+use Mimey\MimeTypes;
 
 class WebController extends Controller
 {
@@ -36,24 +39,25 @@ class WebController extends Controller
         if ($format === '') {
             $isDirectory = true;
             $format = 'html';
+            $static_path = Str::finish($path, '/').'index.html';
         } else {
             $isDirectory = false;
             $path = substr($path, 0, strrpos($path, "."));
+            $static_path = $path.'.'.$format;
         }
         $path = preg_replace('/\/index$/', '', $path);
         if ($path === '') $path = '/';
         $filename = strtolower(pathinfo($path, PATHINFO_FILENAME));
 
-        // Search for the entity is being called by its url, ignore inactive and soft deleted.
-        // TODO: Is there a better way using Laravel Query builder or native
-        /* $langs = config('cms.langs', ['en']);
-        $searchResult = EntityModel::select("id", "model")
-            ->orWhere("properties->url", $url);
-        foreach ($langs as $searchLang) {
-            $searchResult->orWhere("properties->url->$searchLang", $url);
+        // Send the file stored in the static folder if it exist
+        if ($exists = Storage::disk('views_processed')->exists($static_path)) {
+            $mimes = new MimeTypes;
+            $mimeType =  $mimes->getMimeType($format);
+            $headers = ['Content-Type' => $mimeType];
+            return Storage::disk('views_processed')->response($static_path, null, $headers);
         }
-        $searchResult = $searchResult->first();
-        */
+
+        // Search for the entity is being called by its url, ignore inactive and soft deleted.
         $defaultLang = config('cms.langs', [''])[0];
         App::setLocale($defaultLang);
         $searchResult = Route::where('path', $path)->first();
@@ -98,12 +102,15 @@ class WebController extends Controller
         $controller = new $controllerClassName;
         if (method_exists($controller, $model_name)) {
             $view = $controller->$model_name($request, $entity, $lang);
-            if (!env('APP_DEBUG', false)) {
+            if (Config::get('cms.static_generation', 'lazy') === 'lazy') {
                 $modelInstance = new $modelClassName;
                 if ($modelInstance->getCacheViewsAs()) {
                     $render = $view->render();
-                    if ($modelInstance->getCacheViewsAs() === 'directory' || $path == '/'  || $path == '') {
+                    if ($modelInstance->getCacheViewsAs() === 'directory' || $path === '/'  || $path === '') {
                         $cachePath = "$path/index.$format";
+                        if ($path !== '/'  && $path !== '') {
+                            Storage::disk('views_processed')->put($path.'.'.$format, $render);
+                        }
                     } else {
                         $cachePath = "$path.$format";
                     }
@@ -113,6 +120,29 @@ class WebController extends Controller
             return $view;
         } else {
             return ($controller->error($request, 501));
+        }
+    }
+    public function clearCache($includeMedia = false) {
+        $directories = Storage::disk('views_processed')->directories(null, false);
+        $files = Storage::disk('views_processed')->files(null, false);
+        foreach ($directories as $directory) {
+            if (!in_array($directory, ['styles', 'js', 'favicons', 'media'])) {
+                Storage::disk('views_processed')->deleteDirectory($directory, true);
+            }
+        }
+        foreach ($files as $file) {
+            if (!in_array($file, ['robots.txt', 'favicon.txt'])) {
+                Storage::disk('views_processed')->delete($file);
+            }
+        }
+        if ($includeMedia) {
+            $this->clearMediaCache();
+        }
+    }
+    public function clearMediaCache() {
+        $directories = Storage::disk('media_processed')->directories(null, false);
+        foreach ($directories as $directory) {
+            Storage::disk('views_processed')->deleteDirectory($directory, true);
         }
     }
 }
