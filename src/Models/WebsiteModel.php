@@ -2,6 +2,8 @@
 
 namespace Kusikusi\Models;
 
+use App\Models\Home;
+use App\Models\Website;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 use Kusikusi\Models\EntityRelation;
@@ -130,5 +132,42 @@ class WebsiteModel extends EntityModel
             "display" => "standalone"
         ];
         Storage::disk('views_processed')->put("favicons/site.webmanifest", json_encode($webmanifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+    }
+    public static function clearStatic($entity_id = null) {
+        if ($entity_id) {
+            $routes = Route::where('entity_id', $entity_id)->get();
+            foreach ($routes as $route) {
+                Storage::disk('views_processed')->deleteDirectory($route->path, true);
+                Storage::disk('views_processed')->delete($route->path.'.html');
+                $cleared[] = $route->path;
+            }
+        } else {
+            $directories = Storage::disk('views_processed')->directories(null, false);
+            $files = Storage::disk('views_processed')->files(null, false);
+            $cleared = [];
+            foreach ($directories as $directory) {
+                if (!in_array($directory, ['styles', 'js', 'favicons', 'media', 'images'])) {
+                    Storage::disk('views_processed')->deleteDirectory($directory, true);
+                    $cleared[] = $directory;
+                }
+            }
+            foreach ($files as $file) {
+                if (!in_array($file, ['robots.txt', 'favicon.ico', 'sitemap.xml'])) {
+                    Storage::disk('views_processed')->delete($file);
+                    $cleared[] = $file;
+                }
+            }
+        }
+        return $cleared;
+    }
+    public static function recreateStatic() {
+        // TODO: Develop this method, should even recreate the LaravelMix assets
+        WebsiteModel::clearStatic();
+        MediumModel::clearStatic();
+        Storage::disk('views_processed')->delete('favicon.ico');
+        Storage::disk('views_processed')->deleteDirectory('favicons');
+        $website = Website::find('website');
+        WebsiteModel::recreateFavicons($website);
+        return true;
     }
 }

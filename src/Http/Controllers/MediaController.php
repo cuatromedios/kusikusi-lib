@@ -12,6 +12,8 @@ use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Kusikusi\Models\MediumModel;
+use Illuminate\Support\Facades\Validator;
 
 class MediaController extends Controller
 {
@@ -151,5 +153,19 @@ class MediaController extends Controller
         } else {
             return ($properties);
         }
+    }
+    public function clearStatic(Request $request, $entity_id = null) {
+        if ($entity_id) {
+            $validator = Validator::make(get_defined_vars(),
+                ['entity_id' => 'string|min:1|max:16|regex:/^[A-Za-z0-9_-]+$/|exists:entities,id']
+            );
+            if ($validator->fails()) {
+                return $validator->errors();
+            }
+        }
+        $cleared = MediumModel::clearStatic($entity_id);
+        return [
+            'cleared' => $cleared
+        ];
     }
 }

@@ -9,6 +9,8 @@ use Kusikusi\Models\Route;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use Kusikusi\Models\WebsiteModel;
+use Illuminate\Support\Facades\Validator;
 use Mimey\MimeTypes;
 
 class WebController extends Controller
@@ -122,27 +124,21 @@ class WebController extends Controller
             return ($controller->error($request, 501));
         }
     }
-    public function clearCache($includeMedia = false) {
-        $directories = Storage::disk('views_processed')->directories(null, false);
-        $files = Storage::disk('views_processed')->files(null, false);
-        foreach ($directories as $directory) {
-            if (!in_array($directory, ['styles', 'js', 'favicons', 'media'])) {
-                Storage::disk('views_processed')->deleteDirectory($directory, true);
+    public function clearStatic(Request $request, $entity_id = null) {
+        if ($entity_id) {
+            $validator = Validator::make(get_defined_vars(),
+                ['entity_id' => 'string|min:1|max:16|regex:/^[A-Za-z0-9_-]+$/|exists:entities,id']
+            );
+            if ($validator->fails()) {
+                return $validator->errors();
             }
         }
-        foreach ($files as $file) {
-            if (!in_array($file, ['robots.txt', 'favicon.txt'])) {
-                Storage::disk('views_processed')->delete($file);
-            }
-        }
-        if ($includeMedia) {
-            $this->clearMediaCache();
-        }
+        $cleared = WebsiteModel::clearStatic($entity_id);
+        return [
+            'cleared' => $cleared
+        ];
     }
-    public function clearMediaCache() {
-        $directories = Storage::disk('media_processed')->directories(null, false);
-        foreach ($directories as $directory) {
-            Storage::disk('views_processed')->deleteDirectory($directory, true);
-        }
+    public function recreateStatic() {
+        return [ "recreated" => WebsiteModel::recreateStatic() ];
     }
 }

@@ -134,8 +134,8 @@ class EntityController extends Controller
     public function show(Request $request, $entity_id)
     {
         $validator = Validator::make(get_defined_vars(),
-            ['entity_id' => self::ID_RULE,
-                'entity_id' => 'exists:entities,id']);
+            ['entity_id' => self::ID_RULE.'|exists:entities,id']
+        );
         if ($validator->fails()) {
             return $validator->errors();
         }

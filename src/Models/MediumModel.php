@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Mimey\MimeTypes;
 use Kusikusi\Models\EntityModel;
+use Illuminate\Support\Facades\Storage;
 
 class MediumModel extends EntityModel
 {
@@ -85,5 +86,17 @@ class MediumModel extends EntityModel
         }
         return $properties;
     }
-
+    public static function clearStatic($entity_id = null) {
+        $cleared = [];
+        if ($entity_id) {
+            if (Storage::disk('media_processed')->deleteDirectory($entity_id, true)) $cleared[] = $entity_id;
+        } else {
+            $directories = Storage::disk('media_processed')->directories(null, false);
+            foreach ($directories as $directory) {
+                $deleted = Storage::disk('media_processed')->deleteDirectory($directory, true);
+                if ($deleted) $cleared[] = $directory;
+            }
+        }
+        return $cleared;
+    }
 }
