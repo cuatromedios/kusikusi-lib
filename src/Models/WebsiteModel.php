@@ -134,17 +134,20 @@ class WebsiteModel extends EntityModel
         Storage::disk('views_processed')->put("favicons/site.webmanifest", json_encode($webmanifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
     public static function clearStatic($entity_id = null) {
+        $cleared = [];
         if ($entity_id) {
-            $routes = Route::where('entity_id', $entity_id)->get();
-            foreach ($routes as $route) {
-                Storage::disk('views_processed')->deleteDirectory($route->path, true);
+            $entity = EntityModel::with('routes')->find($entity_id);
+            foreach ($entity->routes as $route) {
+                if ($route->path !== '' && $route->path != '/') Storage::disk('views_processed')->deleteDirectory($route->path, true);
                 Storage::disk('views_processed')->delete($route->path.'.html');
                 $cleared[] = $route->path;
+            }
+            if ($entity->model === 'medium') {
+                MediumModel::clearStatic($entity_id);
             }
         } else {
             $directories = Storage::disk('views_processed')->directories(null, false);
             $files = Storage::disk('views_processed')->files(null, false);
-            $cleared = [];
             foreach ($directories as $directory) {
                 if (!in_array($directory, ['styles', 'js', 'favicons', 'media', 'images'])) {
                     Storage::disk('views_processed')->deleteDirectory($directory, true);

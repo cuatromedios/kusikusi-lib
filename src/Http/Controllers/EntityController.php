@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Kusikusi\Models\WebsiteModel;
 
 class EntityController extends Controller
 {
@@ -184,6 +185,11 @@ class EntityController extends Controller
 
         $entity = new $modelClassName($payload);
         $entity->save();
+        switch ($entity->getCacheClearPolicy()) {
+            case EntityModel::CACHE_POLICY_WEBSITE:
+                WebsiteModel::clearStatic();
+                break;
+        }
         $createdEntity = EntityModel::with('contents')->find($entity->id);
         return($createdEntity);
     }
@@ -286,6 +292,11 @@ class EntityController extends Controller
         }
         $entity->fill($payload);
         $entity->save();
+        switch ($entity->getCacheClearPolicy()) {
+            case EntityModel::CACHE_POLICY_WEBSITE:
+                WebsiteModel::clearStatic();
+                break;
+        }
         return($entity);
     }
 

@@ -23,6 +23,8 @@ class EntityModel extends Model
     use UsesShortId;
     use SoftDeletes;
 
+    const CACHE_POLICY_WEBSITE = 'website';
+
     /**********************
      * PROPERTIES
      **********************/
@@ -453,6 +455,9 @@ class EntityModel extends Model
     }
     public function getCacheViewsAs() {
         return $this->cacheViewsAs ?? null;
+    }
+    public function getCacheClearPolicy() {
+        return $this->cacheClearPolicy ?? EntityModel::CACHE_POLICY_WEBSITE;
     }
 
     /**
