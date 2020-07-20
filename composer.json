@@ -1,6 +1,5 @@
 {
     "name": "cuatromedios/kusikusi-lib",
-    "version": "4.3.1",
     "description": "Kusikusi PHP libraries",
     "type": "library",
     "license": "MIT",
