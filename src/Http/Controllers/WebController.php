@@ -52,7 +52,7 @@ class WebController extends Controller
         $filename = strtolower(pathinfo($path, PATHINFO_FILENAME));
 
         // Send the file stored in the static folder if it exist
-        if ($exists = Storage::disk('views_processed')->exists($static_path)) {
+        if ($exists = Storage::disk('views_processed')->exists($static_path) && !env('APP_DEBUG', false)) {
             $mimes = new MimeTypes;
             $mimeType =  $mimes->getMimeType($format);
             $headers = ['Content-Type' => $mimeType];

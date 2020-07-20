@@ -138,7 +138,11 @@ class WebsiteModel extends EntityModel
         if ($entity_id) {
             $entity = EntityModel::with('routes')->find($entity_id);
             foreach ($entity->routes as $route) {
-                if ($route->path !== '' && $route->path != '/') Storage::disk('views_processed')->deleteDirectory($route->path, true);
+                if ($route->path !== '' && $route->path !== '/') {
+                    Storage::disk('views_processed')->deleteDirectory($route->path, true);
+                } else {
+                    Storage::disk('views_processed')->delete('index.html');
+                }
                 Storage::disk('views_processed')->delete($route->path.'.html');
                 $cleared[] = $route->path;
             }
