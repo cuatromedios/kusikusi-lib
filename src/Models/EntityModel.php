@@ -398,6 +398,24 @@ class EntityModel extends Model
         }]);
     }
 
+    /**
+     * Scope to append a media relation to the result, including title and medium properties.
+     *
+     * @param  Builder $query
+     * @param  string $tag Select the first related media that is tagged, the first medium if ommitted
+     * @param  string $fields An array of fields to include, ['id', 'properties->format', 'contents.title'] if omitted
+     * @return Builder
+     */
+    public function scopeAppendMedia($query, $tag = null, $lang = null) {
+        $query->with(['media' => function ($relation) use ($lang, $tag) {
+            $relation->select('id', 'properties', 'properties->format as format');
+            if (isset($tag)) {
+                $relation->whereJsonContains('tags', $tag);
+            }
+            $relation->appendContents(['title'], $lang);
+        }]);
+    }
+
     /**********************
      * PUBLIC METHODS
      *********************/
@@ -552,9 +570,9 @@ class EntityModel extends Model
      * @param null $kind
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany|mixed
      */
-    public function entities_related($kind = null)
+    public function entities_related($kind = null, $modelClassPath = 'Kusikusi\Models\EntityModel')
     {
-        return $this->belongsToMany(  'Kusikusi\Models\EntityModel', 'relations', 'caller_entity_id', 'called_entity_id')
+        return $this->belongsToMany(  $modelClassPath, 'relations', 'caller_entity_id', 'called_entity_id')
             ->using('Kusikusi\Models\EntityRelation')
             ->as('relation')
             ->withPivot('kind', 'position', 'depth', 'tags')
@@ -584,7 +602,7 @@ class EntityModel extends Model
             ->where('kind', '!=', EntityRelation::RELATION_ANCESTOR);
     }
     public function media() {
-        return $this->entities_related(EntityRelation::RELATION_MEDIA);
+        return $this->entities_related(EntityRelation::RELATION_MEDIA, 'App\Models\Medium');
     }
     public function medium($tag = null, $lang = null) {
         return $this->belongsToOne('App\Models\Medium', 'relations', 'caller_entity_id', 'called_entity_id')

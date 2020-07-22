@@ -19,7 +19,7 @@ class EntityCollection extends \Illuminate\Database\Eloquent\Collection
     }
     public function whereIncludes($key, $value, $strict = false) {
         return $this->filter(function ($item) use ($key, $value, $strict) {
-            return in_array($value, data_get($item, $key), $strict);
+            return in_array($value, data_get($item, $key) ?? [], $strict);
         });
     }
     public function firstWhereIncludes($key, $value, $strict = false) {
