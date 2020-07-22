@@ -45,7 +45,7 @@ class MediaController extends Controller
         $presetSettings = Medium::PRESETS[$preset] ?? 'null';
         $publicFilePath = Str::after($request->getPathInfo(), '/media');
         if ($exists = Storage::disk('media_processed')->exists($publicFilePath)) {
-            return $this->getCachedImage($publicFilePath);
+            return $this->getCachedMedium($publicFilePath);
         }
 
         if (NULL === $presetSettings && $preset !== 'original') {
@@ -60,6 +60,9 @@ class MediaController extends Controller
             $headers = [];
             if ($entity->properties['format'] === 'svg') {
                 $headers = ['Content-Type' => 'image/svg+xml'];
+            }
+            if (Config::get('cms.copy_original_media_to_static', true)) {
+                Storage::disk('media_processed')->put($publicFilePath, Storage::disk('media_original')->get($originalFilePath));
             }
             return Storage::disk('media_original')->response($originalFilePath, null, $headers);
         }
@@ -103,9 +106,9 @@ class MediaController extends Controller
         $image->encode($presetSettings['format'], $presetSettings['quality']);
         Storage::disk('media_processed')->put($publicFilePath, $image);
 
-        return $this->getCachedImage($publicFilePath);
+        return $this->getCachedMedium($publicFilePath);
     }
-    private function getCachedImage($publicFilePath) {
+    private function getCachedMedium($publicFilePath) {
         return Storage::disk('media_processed')->response($publicFilePath);
     }
 
