@@ -164,6 +164,13 @@ class WebsiteModel extends EntityModel
                     $cleared[] = $file;
                 }
             }
+            $cachedViews = storage_path('/framework/views/');
+            $files = glob($cachedViews.'*');
+            foreach($files as $file) {
+                if(is_file($file) && !in_array($file, ['.gitignore'])) {
+                    @unlink($file);
+                }
+            }
         }
         return $cleared;
     }
