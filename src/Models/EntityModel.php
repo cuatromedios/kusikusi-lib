@@ -34,6 +34,7 @@ class EntityModel extends Model
     protected $guarded = ['id'];
     protected $contentFields = [ "title", 'slug' ];
     protected $cacheViewsAs = 'directory';
+    protected $touches = ['entities_relating'];
     protected $propertiesFields = [];
     private $storedContents = [];
     private $storedRelations = [];
