@@ -4,6 +4,7 @@ namespace Kusikusi\Models;
 
 use App\Models\Home;
 use App\Models\Website;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 use Kusikusi\Models\EntityRelation;
@@ -171,6 +172,7 @@ class WebsiteModel extends EntityModel
                     @unlink($file);
                 }
             }
+            WebsiteModel::createSitemaps();
         }
         return $cleared;
     }
@@ -178,10 +180,77 @@ class WebsiteModel extends EntityModel
         // TODO: Develop this method, should even recreate the LaravelMix assets
         WebsiteModel::clearStatic();
         MediumModel::clearStatic();
+        WebsiteModel::createSitemaps();
         Storage::disk('views_processed')->delete('favicon.ico');
         Storage::disk('views_processed')->deleteDirectory('favicons');
         $website = Website::find('website');
         WebsiteModel::recreateFavicons($website);
         return true;
+    }
+    public static function createSitemaps($lang = null) {
+        $langs = config('cms.langs', ['']);
+        $si = xmlwriter_open_memory();
+        xmlwriter_set_indent($si, 1);
+        $res = xmlwriter_set_indent_string($si, '  ');
+        xmlwriter_start_document($si, '1.0', 'UTF-8');
+        xmlwriter_start_element($si, 'sitemapindex');
+        xmlwriter_start_attribute($si, 'xmlns');
+        xmlwriter_text($si, 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        xmlwriter_end_attribute($si);
+        $entities = EntityModel::select('id', 'model', 'entities.updated_at')->appendRoute($lang)->get();
+        $models = config("cms.include_in_sitemap", false);
+        foreach($langs as $lang) {
+            self::createSitemap($lang);
+            xmlwriter_start_element($si, 'sitemap');
+            xmlwriter_start_element($si, 'loc');
+            xmlwriter_text($si, env('APP_URL')."/sitemap_{$lang}.xml");
+            xmlwriter_end_element($si);
+            xmlwriter_start_element($si, 'lastmod');
+            xmlwriter_text($si, Carbon::now()->setTimezone(env('APP_TIMEZONE', 'UTC'))->toW3cString());
+            xmlwriter_end_element($si);
+            xmlwriter_end_element($si);
+        }
+        xmlwriter_end_element($si);
+        xmlwriter_end_document($si);
+        Storage::disk('views_processed')->put("sitemap.xml", xmlwriter_output_memory($si));
+    }
+    public static function createSitemap($lang = null) {
+        if (!$lang) $lang = config('cms.langs', [''])[0];
+        $sm = xmlwriter_open_memory();
+        xmlwriter_set_indent($sm, 1);
+        $res = xmlwriter_set_indent_string($sm, '  ');
+        xmlwriter_start_document($sm, '1.0', 'UTF-8');
+        xmlwriter_start_element($sm, 'urlset');
+        xmlwriter_start_attribute($sm, 'xmlns:xsi');
+            xmlwriter_text($sm, 'http://www.w3.org/2001/XMLSchema-instance');
+            xmlwriter_end_attribute($sm);
+        xmlwriter_start_attribute($sm, 'xsi:schemaLocation');
+            xmlwriter_text($sm, 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd');
+            xmlwriter_end_attribute($sm);
+        xmlwriter_start_attribute($sm, 'xmlns');
+            xmlwriter_text($sm, 'http://www.sitemaps.org/schemas/sitemap/0.9');
+            xmlwriter_end_attribute($sm);
+        $entities = EntityModel::select('id', 'model', 'entities.updated_at')->appendRoute($lang)->get();
+        $models = config("cms.include_in_sitemap", false);
+        foreach($entities as $entity) {
+            if ($models === false) {
+                $include = $entity->model !== 'medium';
+            } else {
+                $include = in_array($entity->model, $models);
+            }
+            if ($entity->route && $entity->route !== '' && $include) {
+                xmlwriter_start_element($sm, 'url');
+                xmlwriter_start_element($sm, 'loc');
+                xmlwriter_text($sm, env('APP_URL').$entity->route);
+                xmlwriter_end_element($sm);
+                xmlwriter_start_element($sm, 'lastmod');
+                xmlwriter_text($sm, Carbon::make($entity->updated_at)->setTimezone(env('APP_TIMEZONE', 'UTC'))->toW3cString());
+                xmlwriter_end_element($sm);
+                xmlwriter_end_element($sm);
+            }
+        }
+        xmlwriter_end_element($sm);
+        xmlwriter_end_document($sm);
+        Storage::disk('views_processed')->put("sitemap_{$lang}.xml", xmlwriter_output_memory($sm));
     }
 }
