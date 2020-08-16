@@ -230,7 +230,7 @@ class WebsiteModel extends EntityModel
         xmlwriter_start_attribute($sm, 'xmlns');
             xmlwriter_text($sm, 'http://www.sitemaps.org/schemas/sitemap/0.9');
             xmlwriter_end_attribute($sm);
-        $entities = EntityModel::select('id', 'model', 'entities.updated_at')->appendRoute($lang)->get();
+        $entities = EntityModel::select('id', 'model', 'entities.updated_at')->isPublished()->appendRoute($lang)->get();
         $models = config("cms.include_in_sitemap", false);
         foreach($entities as $entity) {
             if ($models === false) {
