@@ -318,7 +318,9 @@ class EntityController extends Controller
         }
         EntityModel::where('id', $entity_id)->delete();
         $entity = EntityModel::select('id', 'deleted_at')->withTrashed()->find($entity_id);
-        $entity->makeVisible('deleted_at');
+        if ( $entity) {
+            $entity->makeVisible('deleted_at');
+        }
         return($entity);
     }
 
