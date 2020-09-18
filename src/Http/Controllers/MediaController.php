@@ -76,7 +76,7 @@ class MediaController extends Controller
         data_fill($presetSettings, 'crop', false); // only if scale is 'contain': true | false
         data_fill($presetSettings, 'quality', 80); // 0 - 100 for jpg | 1 - 8, (bits) for gif | 1 - 8, 24 (bits) for png
         data_fill($presetSettings, 'format', 'jpg'); // jpg | gif | png
-        data_fill($presetSettings, 'effects', []); // ['colorize' => [50, 0, 0], 'grayscale' => [] ]
+        data_fill($presetSettings, 'effects', []); // ['colorize' => [50, 0, 0], 'greyscale' => [] ]
 
 
         // The fun
