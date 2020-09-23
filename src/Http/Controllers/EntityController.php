@@ -21,29 +21,214 @@ class EntityController extends Controller
     private $calledRelations = [];
     private $addedSelects = [];
     /**
-     * Get a collection of  entities.
-     *
-     * Returns a paginated collection of entities, filtered by all set conditions.
-     *
-     * @group Entity
-     * @authenticated
-     * @queryParam select A comma separated list of fields of the entity to include. It is possible to flat the properties json column using a dot syntax. Example: id,model,properties.price
-     * @queryParam order-by A comma separated lis of fields to order by. Example: model,properties.price:desc,contents.title
-     * @queryParam of-model (filter) The name of the model the entities should be. Example: page
-     * @queryParam only-published (filter) Get only published, not deleted entities, true if not set. Example: true
-     * @queryParam child-of (filter) The id or short id of the entity the result entities should be child of. Example: home
-     * @queryParam parent-of (filter) The id or short id of the entity the result entities should be parent of (will return only one). Example: 8fguTpt5SB
-     * @queryParam ancestor-of (filter) The id or short id of the entity the result entities should be ancestor of. Example: enKSUfUcZN
-     * @queryParam descendant-of (filter) The id or short id of the entity the result entities should be descendant of. Example: xAaqz2RPyf
-     * @queryParam siblings-of (filter) The id or short id of the entity the result entities should be siblings of. Example: _tuKwVy8Aa
-     * @queryParam related-by (filter) The id or short id of the entity the result entities should have been called by using a relation. Can be added a filter to a kind of relation for example: theShortId:category. The ancestor kind of relations are discarted unless are explicity specified. Example: ElFYpgEvWS
-     * @queryParam relating (filter) The id or short id of the entity the result entities should have been a caller of using a relation. Can be added a filder to a kind o relation for example: shortFotoId:medium to know the entities has caller that medium. The ancestor kind of relations are discarted unless are explicity specified. Example: enKSUfUcZN
-     * @queryParam media-of (filter) The id or short id of the entity the result entities should have a media relation to. Example: enKSUfUcZN
-     * @queryParam with A comma separated list of relationships should be included in the result. Example: media,contents,entities_related, entities_related.contents (nested relations)
-     * @queryParam per-page The amount of entities per page the result should be the amount of entities on a single page. Example: 6
-     * @urlParam model_name If a model name is provided, the results will have the corresponding scope and special defined relations and accesosrs will be available.
-     * @responseFile responses/entities.index.json
-     * @return \Illuminate\Http\JsonResponse
+     * @api {get} api/entities[/{model_name}] Get a collection of  entities.
+     * @apiPermission Requires Aurhorization
+     * @apiDescription Returns a paginated collection of entities, filtered by all set conditions.
+     * @apiGroup Entity
+     * 
+     * @apiParam (URL Parameters) [model_name] If a model name is provided, the results will have the corresponding scope and special defined relations and accesosrs will be available.
+     * @apiParam [select] A comma separated list of fields of the entity to include. It is possible to flat the properties json column using a dot syntax. Example: id,model,properties.price
+     * @apiParam [order-by] A comma separated lis of fields to order by. Example: model,properties.price:desc,contents.title
+     * @apiParam [of-model] (filter) The name of the model the entities should be. Example: page
+     * @apiParam [only-published] (filter) Get only published, not deleted entities, true if not set. Example: true
+     * @apiParam [child-of] (filter) The id or short id of the entity the result entities should be child of. Example: home
+     * @apiParam [parent-of] (filter) The id or short id of the entity the result entities should be parent of (will return only one). Example: 8fguTpt5SB
+     * @apiParam [ancestor-of] (filter) The id or short id of the entity the result entities should be ancestor of. Example: enKSUfUcZN
+     * @apiParam [descendant-of] (filter) The id or short id of the entity the result entities should be descendant of. Example: xAaqz2RPyf
+     * @apiParam [siblings-of] (filter) The id or short id of the entity the result entities should be siblings of. Example: _tuKwVy8Aa
+     * @apiParam [related-by] (filter) The id or short id of the entity the result entities should have been called by using a relation. Can be added a filter to a kind of relation for example: theShortId:category. The ancestor kind of relations are discarted unless are explicity specified. Example: ElFYpgEvWS
+     * @apiParam [relating] (filter) The id or short id of the entity the result entities should have been a caller of using a relation. Can be added a filder to a kind o relation for example: shortFotoId:medium to know the entities has caller that medium. The ancestor kind of relations are discarted unless are explicity specified. Example: enKSUfUcZN
+     * @apiParam [media-of] (filter) The id or short id of the entity the result entities should have a media relation to. Example: enKSUfUcZN
+     * @apiParam [with] A comma separated list of relationships should be included in the result. Example: media,contents,entities_related, entities_related.contents (nested relations)
+     * @apiParam [per-page] The amount of entities per page the result should be the amount of entities on a single page. Example: 6
+     * @apiParamExample Example Request (JavaScript):
+     *  const url = new URL(
+     *       "http://127.0.0.1:8000/api/entities[/expedita]"
+     *   );
+     *   let params = {
+     *       "select": "id,model,properties.price",
+     *       "order-by": "model,properties.price:desc,contents.title",
+     *       "of-model": "page",
+     *       "only-published": "true",
+     *       "child-of": "home",
+     *       "parent-of": "8fguTpt5SB",
+     *       "ancestor-of": "enKSUfUcZN",
+     *       "descendant-of": "xAaqz2RPyf",
+     *       "siblings-of": "_tuKwVy8Aa",
+     *       "related-by": "ElFYpgEvWS",
+     *       "relating": "enKSUfUcZN",
+     *       "media-of": "enKSUfUcZN",
+     *       "with": "media,contents,entities_related, entities_related.contents (nested relations)",
+     *       "per-page": "6",
+     *   };
+     *   Object.keys(params)
+     *       .forEach(key => url.searchParams.append(key, params[key]));
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   fetch(url, {
+     *       method: "GET",
+     *       headers: headers,
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->get(
+     *     'http://127.0.0.1:8000/api/entities[/expedita]',
+     *      [
+     *          headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'query' => [
+     *               'select'=> 'id,model,properties.price',
+     *               'order-by'=> 'model,properties.price:desc,contents.title',
+     *               'of-model'=> 'page',
+     *               'only-published'=> 'true',
+     *               'child-of'=> 'home',
+     *               'parent-of'=> '8fguTpt5SB',
+     *               'ancestor-of'=> 'enKSUfUcZN',
+     *               'descendant-of'=> 'xAaqz2RPyf',
+     *               'siblings-of'=> '_tuKwVy8Aa',
+     *               'related-by'=> 'ElFYpgEvWS',
+     *               'relating'=> 'enKSUfUcZN',
+     *               'media-of'=> 'enKSUfUcZN',
+     *               'with'=> 'media,contents,entities_related, entities_related.contents (nested relations)',
+     *               'per-page'=> '6',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     *     {
+     *       "current_page": 1,
+     *       "data": [
+     *          {
+     *               "id": "35337182-7a0c-44c4-a11f-68cd9da930b2",
+     *               "content": {
+     *                   "body": {
+     *                       "en_US": "Consequatur tempora deleniti ea cum totam. Qui quidem quis eius expedita atque officia incidunt."
+     *                   },
+     *                   "slug": {
+     *                       "en_US": "mrs-karlie-torp"
+     *                   },
+     *                   "title": {
+     *                       "en_US": "Felipa Haley PhD"
+     *                   },
+     *                   "summary": {
+     *                       "en_US": "Railroad Inspector"
+     *                   }
+     *               },
+     *               "model": "page",
+     *               "kind": "ancestor",
+     *              "position": 0,
+     *               "depth": 1,
+     *               "tags": null
+     *           },
+     *           {
+     *               "id": "4cbbd1cd-3708-4ac2-8ff7-7261cd6fbe81",
+     *               "content": {
+     *                   "body": {
+     *                       "en_US": "Voluptatem sed autem voluptas eum fuga amet neque. Odit accusantium nemo et architecto."
+     *                   },
+     *                   "slug": {
+     *                       "en_US": "amely-koepp"
+     *                   },
+     *                   "title": {
+     *                       "en_US": "Ashley D'Amore"
+     *                   },
+     *                   "summary": {
+     *                       "en_US": "Homeland Security"
+     *                   }
+     *               },
+     *               "model": "page",
+     *               "kind": "ancestor",
+     *               "position": 0,
+     *               "depth": 1,
+     *               "tags": null
+     *           },
+     *           {
+     *               "id": "6d776ddf-b416-42c7-86cf-c665770c96ff",
+     *               "content": {
+     *                   "body": {
+     *                       "en_US": "Error animi autem sunt et. Qui quia eos sunt sint dicta eligendi quasi. Ut quae aut facilis vel."
+     *                   },
+     *                   "slug": {
+     *                       "en_US": "janis-jenkins-jr"
+     *                   },
+     *                   "title": {
+     *                       "en_US": "Mr. Reagan Deckow I"
+     *                   },
+     *                   "summary": {
+     *                       "en_US": "Pesticide Sprayer"
+     *                   }
+     *               },
+     *               "model": "page",
+     *               "kind": "ancestor",
+     *               "position": 0,
+     *               "depth": 1,
+     *               "tags": null
+     *           },
+     *           {
+     *               "id": "7d504be2-ca0f-4836-b6d2-f00c2dff209c",
+     *               "content": {
+     *                   "body": {
+     *                       "en_US": "Consequatur deserunt non quo sint. Voluptas sint et aliquam qui."
+     *                   },
+     *                   "slug": {
+     *                       "en_US": "mr-xavier-yundt-iv"
+     *                   },
+     *                   "title": {
+     *                       "en_US": "Joyce Kohler MD"
+     *                   },
+     *                   "summary": {
+     *                       "en_US": "Transportation Equipment Maintenance"
+     *                   }
+     *               },
+     *               "model": "page",
+     *               "kind": "ancestor",
+     *               "position": 0,
+     *               "depth": 1,
+     *               "tags": null
+     *           },
+     *           {
+     *               "id": "801892f7-8dcb-4fdc-a1fd-5251ceb6af09",
+     *               "content": {
+     *                   "body": {
+     *                       "en_US": "Assumenda quaerat ipsam dolores ducimus itaque earum sit. Aut dolorem nisi et harum sunt molestiae."
+     *                   },
+     *                   "slug": {
+     *                       "en_US": "ms-lauretta-rohan"
+     *                   },
+     *                   "title": {
+     *                       "en_US": "Dr. Briana Bergstrom DVM"
+     *                   },
+     *                   "summary": {
+     *                       "en_US": "Hotel Desk Clerk"
+     *                   }
+     *              },
+     *               "model": "page",
+     *               "kind": "ancestor",
+     *               "position": 0,
+     *               "depth": 1,
+     *               "tags": null
+     *           }
+     *       ],
+     *       "first_page_url": "http:\/\/127.0.0.1:8000\/api\/entities?relating=bee7a88a-459c-419a-9b3f-96ad3d3822b5%3Aancestor&page=1",
+     *       "from": 1,
+     *       "last_page": 1,
+     *       "last_page_url": "http:\/\/127.0.0.1:8000\/api\/entities?relating=bee7a88a-459c-419a-9b3f-96ad3d3822b5%3Aancestor&page=1",
+     *       "next_page_url": null,
+     *       "path": "http:\/\/127.0.0.1:8000\/api\/entities",
+     *       "per_page": 100,
+     *       "prev_page_url": null,
+     *       "to": 5,
+     *       "total": 5
+     *   }
+     * 
      */
     public function index(Request $request, $model_name = null)
     {
@@ -123,14 +308,14 @@ class EntityController extends Controller
 
     /**
      * Retrieve the entity for the given ID.
-     *
-     * @group Entity
-     * @authenticated
-     * @urlParam entity_id The id of the entity to show.
-     * @queryParam select A comma separated list of fields of the entity to include. It is possible to flat the properties json column using a dot syntax. Example: id,model,properties.price
-     * @queryParam with A comma separated list of relationships should be included in the result. Example: media,contents,entities_related, entities_related.contents (nested relations)
-     * @responseFile responses/entities.show.json
-     * @return \Illuminate\Http\JsonResponse
+     * @api {get} api/entity/{entity_id} Retrieve the entity for the given ID.
+     * @apiPermission Requires Aurhorization
+     * @apiGroup Entity
+     * 
+     * @apiParam (URL Parameters) [entity_id] The id of the entity to show.
+     * @apiParam [select] A comma separated list of fields of the entity to include. It is possible to flat the properties json column using a dot syntax. Example: id,model,properties.price
+     * @apiParam [with] A comma separated list of relationships should be included in the result. Example: media,contents,entities_related, entities_related.contents (nested relations)
+     * 
      */
     public function show(Request $request, $entity_id)
     {
