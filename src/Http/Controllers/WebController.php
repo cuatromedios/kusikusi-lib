@@ -26,11 +26,8 @@ class WebController extends Controller
     }
 
     /**
-     * Locates an entity based on the url, and returns the HTML view of that entity as a webpage
-     *
-     * @group Web
-     * @param $request \Illuminate\Http\Request
-     * @return \Illuminate\Http\Response
+     * @api {get} {path:.*} Locates an entity based on the url, and returns the HTML view of that entity as a webpage.
+     * @apiGroup Web  
      */
     public function any(Request $request)
     {

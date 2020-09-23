@@ -28,12 +28,42 @@ class MediaController extends Controller
     }
 
     /**
-     * Gets a medium: Optimized using a preset if it is an image or the original one if not.
-     *
-     * @group Media
-     * @urlParam entity_id required The id of the entity of type medium to get. Example: djr4sd7Gmd
-     * @urlParam preset required A preset configured in config/media.php to process the image. Example: icon.
-     * @return Response
+     * @api {get} media/{entity_id}/{preset}[/{friendly}] Gets a medium.
+     * @apiDescription Optimized using a preset if it is an image or the original one if not.
+     * @apiGroup Media
+     * 
+     * @apiParam (URL Parameters) entity_id required, The id of the entity of type medium to get. Example: djr4sd7Gmd
+     * @apiParam (URL Parameters) preset required, A preset configured in config/media.php to process the image. Example: icon.
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     *   const url = new URL(
+     *       "http://127.0.0.1:8000/media/djr4sd7Gmd/icon.[/1]"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   fetch(url, {
+     *       method: "GET",
+     *       headers: headers,
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->get(
+     *       'http://127.0.0.1:8000/media/djr4sd7Gmd/icon.[/1]',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     * null
      */
     public function get(Request $request, $entity_id, $preset, $friendly = NULL)
     {
@@ -113,14 +143,14 @@ class MediaController extends Controller
     }
 
     /**
-     * Uploads a medium
-     *
-     * @group Media
-     * @urlParam entity_id The id of the entity to upload a medium or file
-     * @bodyParam file required The file to be uploaded
-     * @bodyParam thumb optional An optional file to represent the media, for example a thumb of a video
-     * @responseFile responses/entities.index.json
-     * @return \Illuminate\Http\JsonResponse
+     * @api {post} api/medium/{entity_id}/upload Uploads a medium.
+     * @apiPermission Requires Authentication
+     * @apiGroup Media
+     * 
+     * @apiParam (URL Parameters) [entity_id] The id of the entity to upload a medium or file
+     * @apiParam file required, The file to be uploaded
+     * @apiParam [thumb] An optional file to represent the media, for example a thumb of a video
+     * 
      */
     public function upload(Request $request, $entity_id)
     {

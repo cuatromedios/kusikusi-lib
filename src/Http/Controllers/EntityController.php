@@ -22,7 +22,7 @@ class EntityController extends Controller
     private $addedSelects = [];
     /**
      * @api {get} api/entities[/{model_name}] Get a collection of  entities.
-     * @apiPermission Requires Aurhorization
+     * @apiPermission Requires Authentication
      * @apiDescription Returns a paginated collection of entities, filtered by all set conditions.
      * @apiGroup Entity
      * 
@@ -41,6 +41,7 @@ class EntityController extends Controller
      * @apiParam [media-of] (filter) The id or short id of the entity the result entities should have a media relation to. Example: enKSUfUcZN
      * @apiParam [with] A comma separated list of relationships should be included in the result. Example: media,contents,entities_related, entities_related.contents (nested relations)
      * @apiParam [per-page] The amount of entities per page the result should be the amount of entities on a single page. Example: 6
+     * 
      * @apiParamExample Example Request (JavaScript):
      *  const url = new URL(
      *       "http://127.0.0.1:8000/api/entities[/expedita]"
@@ -307,15 +308,74 @@ class EntityController extends Controller
     }
 
     /**
-     * Retrieve the entity for the given ID.
      * @api {get} api/entity/{entity_id} Retrieve the entity for the given ID.
-     * @apiPermission Requires Aurhorization
+     * @apiPermission Requires Authentication
      * @apiGroup Entity
      * 
      * @apiParam (URL Parameters) [entity_id] The id of the entity to show.
      * @apiParam [select] A comma separated list of fields of the entity to include. It is possible to flat the properties json column using a dot syntax. Example: id,model,properties.price
      * @apiParam [with] A comma separated list of relationships should be included in the result. Example: media,contents,entities_related, entities_related.contents (nested relations)
      * 
+     * @apiParamExample Example Request (JavaScript):
+     * const url = new URL(
+     *      "http://127.0.0.1:8000/api/entity/corporis"
+     *   );
+     *   let params = {
+     *       "select": "id,model,properties.price",
+     *       "with": "media,contents,entities_related, entities_related.contents (nested relations)",
+     *   };
+     *   Object.keys(params)
+     *       .forEach(key => url.searchParams.append(key, params[key]));
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   fetch(url, {
+     *       method: "GET",
+     *       headers: headers,
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP): 
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->get(
+     *       'http://127.0.0.1:8000/api/entity/corporis',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'query' => [
+     *               'select'=> 'id,model,properties.price',
+     *               'with'=> 'media,contents,entities_related, entities_related.contents (nested relations)',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     *   {
+     *       "id": "DkESBOv-wT",
+     *       "model": "page-m",
+     *       "properties": {
+     *           "prop1": "Z",
+     *           "prop2": "Z"
+     *       },
+     *       "view": "yuyxo",
+     *       "parent_entity_id": "home",
+     *       "is_active": true,
+     *       "created_by": null,
+     *       "updated_by": null,
+     *       "published_at": "2020-08-27 14:55:30",
+     *       "unpublished_at": "9999-12-31 23:59:59",
+     *       "version": 18,
+     *       "version_tree": 0,
+     *       "version_relations": 9,
+     *       "version_full": 27,
+     *       "created_at": "2020-04-20T19:36:58.000000Z",
+     *       "updated_at": "2020-04-20T20:25:19.000000Z",
+     *       "deleted_at": null
+     *   }
      */
     public function show(Request $request, $entity_id)
     {
@@ -340,20 +400,82 @@ class EntityController extends Controller
     }
 
     /**
-     * Creates a new entity.
+     * 
+     * @api {post} api/entity Creates a new entity.
+     * @apiPermission Requires Authentication
+     * @apiGroup Entity
      *
-     * @group Entity
-     * @authenticated
-     * @bodyParam model string required The model name. Example: page.
-     * @bodyParam view string The name of the view to use. Default: the same name of the model. Example: page
-     * @bodyParam published_at date A date time the entity should be published. Default: current date time. Example: 2020-02-02 12:00:00.
-     * @bodyParam unpublished_at date A date time the entity should be published. Default: 9999-12-31 23:59:59. Example: 2020-02-02 12:00:00.
-     * @bodyParam properties string An object with properties. Example: {"price": 200, "format": "jpg"}
-     * @bodyParam id string You can set your own ID, a maximum of 16, safe characters: A-Z, a-z, 0-9, _ and -. Default: autogenerated. Example: home
-     * @bodyParam contents array An array of contents to be created for the entity. Example: { "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}
-     * @bodyParam relations arrya An array of relations to be created for the entity. Example: "relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]
-     * @responseFile responses/entities.create.json
-     * @return \Illuminate\Http\JsonResponse
+     * @apiParam {string} model required The model name. Example: page.
+     * @apiParam {string} [view] The name of the view to use. Default: the same name of the model. Example: page
+     * @apiParam {date} [published_at] A date time the entity should be published. Default: current date time. Example: 2020-02-02 12:00:00.
+     * @apiParam {date} [unpublished_at] A date time the entity should be published. Default: 9999-12-31 23:59:59. Example: 2020-02-02 12:00:00.
+     * @apiParam {string} [properties] An object with properties. Example: {"price": 200, "format": "jpg"}
+     * @apiParam {string} [id] You can set your own ID, a maximum of 16, safe characters: A-Z, a-z, 0-9, _ and -. Default: autogenerated. Example: home
+     * @apiParam {array} [contents] An array of contents to be created for the entity. Example: { "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}
+     * @apiParam {array} [relations] An array of relations to be created for the entity. Example: "relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     * const url = new URL(
+     *       "http://127.0.0.1:8000/api/entity"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   let body = {
+     *       "model": "page.",
+     *       "view": "page",
+     *       "published_at": "2020-02-02 12:00:00.",
+     *       "unpublished_at": "2020-02-02 12:00:00.",
+     *       "properties": "{\"price\": 200, \"format\": \"jpg\"}",
+     *       "id": "home",
+     *       "contents": "{ \"title\": {\"en_US\": \"The page M\", \"es_ES\": \"La p\u00e1gina M\"}, \"slug\": {\"en_US\": \"page-m\", \"es_ES\": \"pagina-m\"}}",
+     *       "relations": "\"relations\": [{\"called_entity_id\": \"mf4gWE45pm\",\"kind\": \"category\",\"position\": 2, \"tags\":[\"main\"]}]"
+     *   }
+     *   fetch(url, {
+     *       method: "POST",
+     *       headers: headers,
+     *       body: body
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     * $client = new \GuzzleHttp\Client();
+     * $response = $client->post(
+     *       'http://127.0.0.1:8000/api/entity',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'json' => [
+     *               'model' => 'page.',
+     *               'view' => 'page',
+     *               'published_at' => '2020-02-02 12:00:00.',
+     *               'unpublished_at' => '2020-02-02 12:00:00.',
+     *               'properties' => '{"price": 200, "format": "jpg"}',
+     *               'id' => 'home',
+     *               'contents' => '{ "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}',
+     *               'relations' => '"relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]',
+     *           ],
+     *       ]
+     *   );
+     * $body = $response->getBody();
+     * print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     * {
+     *       "model": "page-m",
+     *       "view": "page",
+     *       "parent_entity_id": "home",
+     *       "published_at": "2020-08-27T14:55:30",
+     *       "properties": {
+     *           "prop1": "b",
+     *           "prop2": 1
+     *       },
+     *       "id": "DkESBOv-wT",
+     *       "updated_at": "2020-04-20T19:36:58.000000Z",
+     *       "created_at": "2020-04-20T19:36:58.000000Z"
+     *   } 
      */
     public function create(Request $request)
     {
@@ -380,26 +502,160 @@ class EntityController extends Controller
     }
 
     /**
-     * Creates a new entity with a relation.
+     * @api {post} api/entity/{caller_entity_id}/create_and_relate Creates a new entity with a relation.
+     * @apiPermission Requires Authentication
+     * @apiDescription Creates a new entity with a specific relation to another entity, the entity "id" and "caller_entity_id" should the same.
+     * @apiGroup Entity
      *
-     * Creates a new entity with a specific relation to another entity, the entity "id" and "caller_entity_id" should the same.
-     *
-     * @group Entity
-     * @authenticated
-     * @urlParam entity_caller_id required The id of the entity to create or update a relation
-     * @bodyParam model string required The model name. Example: home
-     * @bodyParam kind string required The kind of relation to create or update. Example: medium | category
-     * @bodyParam view string The name of the view to use. Default: the same name of the model. Example: home
-     * @bodyParam published_at date A date time the entity should be published. Default: current date time. Example: 2020-02-02 12:00:00.
-     * @bodyParam unpublished_at date A date time the entity should be published. Default: 9999-12-31 23:59:59. Example: 2020-02-02 12:00:00.
-     * @bodyParam properties string An object with properties. Example: {"price": 200, "format": "jpg"}
-     * @bodyParam contents array An array of contents to be created for the entity. Example: { "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}
-     * @bodyParam relations arrya An array of relations to be created for the entity. Example: "relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]
-     * @bodyParam tags array An array of tags to add to the relation. Defaults to an empty array. Example: ["1", '2"].
-     * @bodyParam position integer The position of the relation. Example: 3.
-     * @bodyParam depth integer Yet another number value to use freely for the relation, used in ancestor type of relation to define the distance between an entity and other in the tree. Example 1.
-     * @responseFile responses/entities.createAndAddRelation.json
-     * @return \Illuminate\Http\JsonResponse
+     * @apiParam (URL Parameters) entity_caller_id required, The id of the entity to create or update a relation
+     * @apiParam {string} model required, The model name. Example: home
+     * @apiParam {string} kind required, The kind of relation to create or update. Example: medium | category
+     * @apiParam {string} [view] The name of the view to use. Default: the same name of the model. Example: home
+     * @apiParam {date} [published_at] A date time the entity should be published. Default: current date time. Example: 2020-02-02 12:00:00.
+     * @apiParam {date} [unpublished_at] A date time the entity should be published. Default: 9999-12-31 23:59:59. Example: 2020-02-02 12:00:00.
+     * @apiParam {string} [properties] An object with properties. Example: {"price": 200, "format": "jpg"}
+     * @apiParam {array} [contents] An array of contents to be created for the entity. Example: { "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}
+     * @apiParam {array} [relations] An array of relations to be created for the entity. Example: "relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]
+     * @apiParam {array} [tags] An array of tags to add to the relation. Defaults to an empty array. Example: ["1", '2"].
+     * @apiParam {integer} [position] The position of the relation. Example: 3.
+     * @apiParam {integer} [depth] Yet another number value to use freely for the relation, used in ancestor type of relation to define the distance between an entity and other in the tree. Example 1.
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     * const url = new URL(
+     *       "http://127.0.0.1:8000/api/entity/1/create_and_relate"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   let body = {
+     *       "model": "home",
+     *       "kind": "medium | category",
+     *       "view": "home",
+     *       "published_at": "2020-02-02 12:00:00.",
+     *       "unpublished_at": "2020-02-02 12:00:00.",
+     *       "properties": "{\"price\": 200, \"format\": \"jpg\"}",
+     *       "contents": "{ \"title\": {\"en_US\": \"The page M\", \"es_ES\": \"La p\u00e1gina M\"}, \"slug\": {\"en_US\": \"page-m\", \"es_ES\": \"pagina-m\"}}",
+     *       "relations": "\"relations\": [{\"called_entity_id\": \"mf4gWE45pm\",\"kind\": \"category\",\"position\": 2, \"tags\":[\"main\"]}]",
+     *       "tags": "[\"1\", '2\"].",
+     *       "position": 3,
+     *       "depth": 3
+     *   }
+     *   fetch(url, {
+     *       method: "POST",
+     *       headers: headers,
+     *       body: body
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     * $client = new \GuzzleHttp\Client();
+     *  $response = $client->post(
+     *       'http://127.0.0.1:8000/api/entity/1/create_and_relate',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'json' => [
+     *               'model' => 'home',
+     *               'kind' => 'medium | category',
+     *               'view' => 'home',
+     *               'published_at' => '2020-02-02 12:00:00.',
+     *               'unpublished_at' => '2020-02-02 12:00:00.',
+     *               'properties' => '{"price": 200, "format": "jpg"}',
+     *               'contents' => '{ "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}',
+     *               'relations' => '"relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]',
+     *               'tags' => '["1", \'2"].',
+     *               'position' => 3,
+     *               'depth' => 3,
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     * {
+     *       "id": "tEQxMPF8hs",
+     *       "model": "medium",
+     *       "properties": [],
+     *       "view": "medium",
+     *       "parent_entity_id": null,
+     *       "is_active": true,
+     *       "created_by": null,
+     *       "updated_by": null,
+     *       "published_at": "2020-05-09T00:17:54+00:00",
+     *       "unpublished_at": null,
+     *       "version": 1,
+     *       "version_tree": 0,
+     *       "version_relations": 0,
+     *       "version_full": 1,
+     *       "created_at": "2020-05-09T00:17:54+00:00",
+     *       "updated_at": "2020-05-09T00:17:54+00:00",
+     *       "deleted_at": null,
+     *       "thumb": "\/media\/tEQxMPF8hs\/thumb\/media.jpg",
+     *       "preview": "\/media\/tEQxMPF8hs\/preview\/media.jpg",
+     *       "entities_relating": [
+     *           {
+     *               "id": "4dnK2CJspO",
+     *               "model": "page",
+     *               "properties": {
+     *                   "exif": {
+     *                       "COMPUTED": {
+     *                           "html": "width=\"1280\" height=\"1102\"",
+     *                           "Width": 1280,
+     *                           "Height": 1102,
+     *                           "IsColor": 1
+     *                       },
+     *                       "FileName": "phpovyCKl",
+     *                       "FileSize": 82033,
+     *                       "FileType": 2,
+     *                       "MimeType": "image\/jpeg",
+     *                       "FileDateTime": 1588959027,
+     *                       "SectionsFound": ""
+     *                   },
+     *                   "size": 82033,
+     *                   "type": "image",
+     *                   "prop1": "Z",
+     *                   "prop2": "Z",
+     *                   "width": 1280,
+     *                   "format": "jpg",
+     *                   "height": 1102,
+     *                   "isAudio": false,
+     *                   "isImage": true,
+     *                   "isVideo": false,
+     *                   "mimeType": "image\/jpeg",
+     *                   "isDocument": false,
+     *                   "isWebAudio": false,
+     *                   "isWebImage": true,
+     *                   "isWebVideo": false,
+     *                   "originalName": "3evient.jpeg"
+     *               },
+     *               "view": "yuyxo",
+     *               "parent_entity_id": "0qtTYPQhm4",
+     *               "is_active": true,
+     *               "created_by": null,
+     *               "updated_by": null,
+     *               "published_at": "2020-05-07T12:50:49+00:00",
+     *               "unpublished_at": null,
+     *               "version": 67,
+     *               "version_tree": 0,
+     *               "version_relations": 46,
+     *               "version_full": 113,
+     *               "created_at": "2020-05-07T12:50:49+00:00",
+     *               "updated_at": "2020-05-08T17:31:54+00:00",
+     *               "deleted_at": null,
+     *               "relation": {
+     *                   "called_entity_id": "tEQxMPF8hs",
+     *                   "caller_entity_id": "4dnK2CJspO",
+     *                   "kind": "medium",
+     *                   "position": 41,
+     *                   "depth": 0,
+     *                   "tags": []
+     *               }
+     *           }
+     *       ]
+     *   }
      */
     public function createAndAddRelation(Request $request, $caller_entity_id)
     {
@@ -439,20 +695,80 @@ class EntityController extends Controller
     }
 
     /**
-     * Updates an entity.
+     * 
+     * @api {patch} api/entity/{entity_id} Updates an entity.
+     * @apiPermission Requires Authentication
+     * @apiGroup Entity
      *
-     * @group Entity
-     * @authenticated
-     * @urlParam entity_id The id of the entity to update
-     * @bodyParam view string The name of the view to use. Default: the same name of the model. Example: page
-     * @bodyParam published_at date A date time the entity should be published. Default: current date time. Example: 2020-02-02 12:00:00.
-     * @bodyParam unpublished_at date A date time the entity should be published. Default: 9999-12-31 23:59:59. Example: 2020-02-02 12:00:00.
-     * @bodyParam properties string An object with properties. Example: {"price": 200, "format": "jpg"}
-     * @bodyParam id string You can set your own ID, a maximum of 16, safe characters: A-Z, a-z, 0-9, _ and -. Default: autogenerated. Example: home
-     * @bodyParam contents array An array of contents to be created for the entity. Example: { "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}
-     * @bodyParam relations arrya An array of relations to be created for the entity. Example: "relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]
-     * @responseFile responses/entities.update.json
-     * @return \Illuminate\Http\JsonResponse
+     * @apiParam (URL Parameters) [entity_id] The id of the entity to update
+     * @apiParam {string}[ view] The name of the view to use. Default: the same name of the model. Example: page
+     * @apiParam {date} [published_at] A date time the entity should be published. Default: current date time. Example: 2020-02-02 12:00:00.
+     * @apiParam {date} [unpublished_at] A date time the entity should be published. Default: 9999-12-31 23:59:59. Example: 2020-02-02 12:00:00.
+     * @apiParam {string} [properties] An object with properties. Example: {"price": 200, "format": "jpg"}
+     * @apiParam {string} [id] You can set your own ID, a maximum of 16, safe characters: A-Z, a-z, 0-9, _ and -. Default: autogenerated. Example: home
+     * @apiParam {array} [contents] An array of contents to be created for the entity. Example: { "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}
+     * @apiParam {array} [relations] An array of relations to be created for the entity. Example: "relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     * const url = new URL(
+     *       "http://127.0.0.1:8000/api/entity/minus"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   let body = {
+     *       "view": "page",
+     *       "published_at": "2020-02-02 12:00:00.",
+     *       "unpublished_at": "2020-02-02 12:00:00.",
+     *       "properties": "{\"price\": 200, \"format\": \"jpg\"}",
+     *       "id": "home",
+     *       "contents": "{ \"title\": {\"en_US\": \"The page M\", \"es_ES\": \"La p\u00e1gina M\"}, \"slug\": {\"en_US\": \"page-m\", \"es_ES\": \"pagina-m\"}}",
+     *       "relations": "\"relations\": [{\"called_entity_id\": \"mf4gWE45pm\",\"kind\": \"category\",\"position\": 2, \"tags\":[\"main\"]}]"
+     *   }
+     *   fetch(url, {
+     *       method: "PATCH",
+     *       headers: headers,
+     *       body: body
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     * $client = new \GuzzleHttp\Client();
+     * $response = $client->patch(
+     *       'http://127.0.0.1:8000/api/entity/minus',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'json' => [
+     *               'view' => 'page',
+     *               'published_at' => '2020-02-02 12:00:00.',
+     *               'unpublished_at' => '2020-02-02 12:00:00.',
+     *               'properties' => '{"price": 200, "format": "jpg"}',
+     *               'id' => 'home',
+     *               'contents' => '{ "title": {"en_US": "The page M", "es_ES": "La página M"}, "slug": {"en_US": "page-m", "es_ES": "pagina-m"}}',
+     *               'relations' => '"relations": [{"called_entity_id": "mf4gWE45pm","kind": "category","position": 2, "tags":["main"]}]',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     * {
+     *       "model": "page-m",
+     *       "view": "page",
+     *       "parent_entity_id": "home",
+     *       "published_at": "2020-08-27T14:55:30",
+     *       "properties": {
+     *           "prop1": "b",
+     *           "prop2": 1
+     *       },
+     *       "id": "DkESBOv-wT",
+     *       "updated_at": "2020-04-20T19:36:58.000000Z",
+     *       "created_at": "2020-04-20T19:36:58.000000Z"
+     *   }
      */
     public function update(Request $request, $entity_id)
     {
@@ -486,13 +802,44 @@ class EntityController extends Controller
     }
 
     /**
-     * Deletes an entity.
+     * @api {delete} api/entity/{entity_id} Deletes an entity.
+     * @apiPermission Requires Authentication
+     * @apiGroup Entity
      *
-     * @group Entity
-     * @authenticated
-     * @urlParam entity_id The id of the entity to delete
-     * @responseFile responses/entities.delete.json
-     * @return \Illuminate\Http\JsonResponse
+     * @apiParam (URL Parameters) [entity_id] The id of the entity to delete
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     * const url = new URL(
+     *       "http://127.0.0.1:8000/api/entity/totam"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   fetch(url, {
+     *       method: "DELETE",
+     *       headers: headers,
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     * $client = new \GuzzleHttp\Client();
+     *   $response = $client->delete(
+     *       'http://127.0.0.1:8000/api/entity/totam',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     * {
+     *       "id": "NiCJ5xKaIy",
+     *       "deleted_at": "2020-04-20T21:19:27.000000Z"
+     *   }
      */
     public function delete(Request $request, $entity_id)
     {
@@ -510,18 +857,73 @@ class EntityController extends Controller
     }
 
     /**
-     * Creates or updates a relation.
+     * @api {post} api/entity/{caller_entity_id}/relation Creates or updates a relation.
+     * @apiPermission Requires Authentication
+     * @apiGroup Entity
      *
-     * @group Entity
-     * @authenticated
-     * @urlParam entity_caller_id required The id of the entity to create or update a relation
-     * @bodyParam entity_called_id string required The id of the entity to relate. Example: s4FG56mkdRT5
-     * @bodyParam kind string required The kind of relation to create or update. Example: medium | category
-     * @bodyParam tags array An array of tags to add to the relation. Defaults to an empty array. Example ["icon", 'gallery"].
-     * @bodyParam position integer The position of the relation. Example: 3.
-     * @bodyParam depth integer Yet another number value to use freely for the relation, used in ancestor type of relation to define the distance between an entity and other in the tree. Example 1.
-     * @responseFile responses/entities.createRelation.json
-     * @return \Illuminate\Http\JsonResponse
+     * @apiParam (URL Parameters) entity_caller_id required, The id of the entity to create or update a relation
+     * @apiParam {string} entity_called_id required, The id of the entity to relate. Example: s4FG56mkdRT5
+     * @apiParam {string} kind required, The kind of relation to create or update. Example: medium | category
+     * @apiParam {array} [tags] An array of tags to add to the relation. Defaults to an empty array. Example ["icon", 'gallery"].
+     * @apiParam {integer} [position] The position of the relation. Example: 3.
+     * @apiParam {integer} [depth] Yet another number value to use freely for the relation, used in ancestor type of relation to define the distance between an entity and other in the tree. Example 1.
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     * const url = new URL(
+     *       "http://127.0.0.1:8000/api/entity/1/relation"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   let body = {
+     *       "entity_called_id": "s4FG56mkdRT5",
+     *       "kind": "medium | category",
+     *       "tags": [],
+     *       "position": 3,
+     *       "depth": 13
+     *   }
+     *   fetch(url, {
+     *       method: "POST",
+     *       headers: headers,
+     *       body: body
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     * $client = new \GuzzleHttp\Client();
+     * $response = $client->post(
+     *       'http://127.0.0.1:8000/api/entity/1/relation',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'json' => [
+     *               'entity_called_id' => 's4FG56mkdRT5',
+     *               'kind' => 'medium | category',
+     *               'tags' => [],
+     *               'position' => 3,
+     *               'depth' => 13,
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example): 
+     * {
+     *       "relation_id": "WZ3PnzvNP4",
+     *       "caller_entity_id": "Z4bdjFSzn5",
+     *       "called_entity_id": "DtPatk4FNG",
+     *       "kind": "reltest",
+     *       "position": 2,
+     *       "depth": 3,
+     *       "tags": [
+     *           "icon"
+     *       ],
+     *       "created_at": "2020-04-23T15:01:32.000000Z",
+     *       "updated_at": "2020-04-23T15:10:14.000000Z"
+     *   }
      */
     public function createRelation(Request $request, $caller_entity_id)
     {
@@ -551,15 +953,45 @@ class EntityController extends Controller
     }
 
     /**
-     * Deletes a relation if exists.
-     *
-     * @group Entity
-     * @authenticated
-     * @urlParam entity_caller_id required The id of the entity to create or update a relation
-     * @urlParam entity_called_id string required The id of the entity to relate. Example: s4FG56mkdRT5
-     * @urlParam kind string required The kind of relation to create or update. Example: medium | category
-     * @responseFile responses/entities.deleteRelation.json
-     * @return \Illuminate\Http\JsonResponse
+     * @api {delete} api/entity/{caller_entity_id}/relation/{called_entity_id}/{kind} Deletes a relation if exists.
+     * @apiPermission Requires Authentication
+     * @apiGroup Entity
+     * 
+     * @apiParam (URL Parameters) entity_caller_id required, The id of the entity to create or update a relation
+     * @apiParam (URL Parameters) {string} entity_called_id required, The id of the entity to relate. Example: s4FG56mkdRT5
+     * @apiParam (URL Parameters) {string} kind required, The kind of relation to create or update. Example: medium | category
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     *   const url = new URL(
+     *       "http://127.0.0.1:8000/api/entity/1/relation/1/medium | category"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   fetch(url, {
+     *       method: "DELETE",
+     *       headers: headers,
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->delete(
+     *       'http://127.0.0.1:8000/api/entity/1/relation/1/medium | category',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     * {
+     *       "relation_id": "673KBPT778"
+     *   }
      */
     public function deleteRelation(Request $request, $caller_entity_id, $called_entity_id, $kind)
     {
@@ -586,15 +1018,60 @@ class EntityController extends Controller
     }
 
     /**
-     * Reorders an array of relations
-     *
-     * Receive an array of relation ids, and sets the individual position to its index in the array.
-     *
-     * @group Entity
-     * @authenticated
-     * @bodyParam relation_ids array required An array of relation ids to reorder. Example ['s4FG56mkdRT5', 'FG56mkdRT5s3', '4FG56mkdRT5d']
-     * @responseFile responses/entities.reorderRelations.json
-     * @return \Illuminate\Http\JsonResponse
+     * @api {patch} api/entities/relations/reorder Reorders an array of relations.
+     * @apiPermission Requires Authentication
+     * @apiDescription Receive an array of relation ids, and sets the individual position to its index in the array.
+     * @apiGroup Entity
+     * 
+     * @apiParam {array} relation_ids required, An array of relation ids to reorder. Example ['s4FG56mkdRT5', 'FG56mkdRT5s3', '4FG56mkdRT5d']
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     *   const url = new URL(
+     *       "http://127.0.0.1:8000/api/entities/relations/reorder"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   let body = {
+     *       "relation_ids": []
+     *   }
+     *   fetch(url, {
+     *       method: "PATCH",
+     *       headers: headers,
+     *       body: body
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->patch(
+     *       'http://127.0.0.1:8000/api/entities/relations/reorder',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'json' => [
+     *               'relation_ids' => [],
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example):
+     *   {
+     *       "relations": [
+     *           {
+     *               "relation_id": "JvE3WPG504",
+     *               "position": 1
+     *           },
+     *           {
+     *               "relation_id": "izMhhYpXA7",
+     *               "position": 2
+     *           }
+     *       ]
+     *   }
      */
     public function reorderRelations(Request $request)
     {

@@ -21,13 +21,58 @@ class UserController extends Controller
     }
 
     /**
-     * Authenticate a user.
-     *
-     *@group User
-     * @bodyParam email string required
-     * @bodyParam password string required
-     * @responseFile responses/user.authenticate.json
-     * @return \Illuminate\Http\JsonResponse
+     * @api {post} api/user/login Authenticate a user.
+     * @apiGroup User
+     * 
+     * @apiParam {string} email required
+     * @apiParam {string} password required
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     *   const url = new URL(
+     *       "http://127.0.0.1:8000/api/user/login"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   let body = {
+     *       "email": "laudantium",
+     *       "password": "dignissimos"
+     *   }
+     *   fetch(url, {
+     *       method: "POST",
+     *       headers: headers,
+     *       body: body
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json)); 
+     * @apiParamExample Example Request (PHP):
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->post(
+     *       'http://127.0.0.1:8000/api/user/login',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *           'json' => [
+     *               'email' => 'laudantium',
+     *               'password' => 'dignissimos',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body)); 
+     * @apiSuccessExample {json} Response (example):
+     *   {
+     *       "token": "JDJ5JDEwJEcwRlFrQmxEM04uQnNXMTNjWE5wME9QYncuZ2ZnUGZlQzJ3SUpsZFhIMUl6MXZ0TVprb2RD",
+     *       "user": {
+     *           "id": "8M1KRk1kLe",
+     *           "email": "admin@example.com",
+     *           "name": "Administrator",
+     *           "profile": "admin"
+     *       }
+     *   }
      */
     public function authenticate(Request $request)
     {
@@ -44,9 +89,41 @@ class UserController extends Controller
     }
 
     /**
-     * Returns the current logged user
+     * @api {get} api/user/me Returns the current logged user.
+     * @apiGroup User
+     * 
+     * @apiParamExample Example Request (JavaScript):
+     *   const url = new URL(
+     *       "http://127.0.0.1:8000/api/user/me"
+     *   );
+     *   let headers = {
+     *       "Content-Type": "application/json",
+     *       "Accept": "application/json",
+     *   };
+     *   fetch(url, {
+     *       method: "GET",
+     *       headers: headers,
+     *   })
+     *       .then(response => response.json())
+     *       .then(json => console.log(json));
+     * @apiParamExample Example Request (PHP):
      *
-     * @return \Illuminate\Http\Response
+     *   $client = new \GuzzleHttp\Client();
+     *   $response = $client->get(
+     *       'http://127.0.0.1:8000/api/user/me',
+     *       [
+     *           'headers' => [
+     *               'Content-Type' => 'application/json',
+     *               'Accept' => 'application/json',
+     *           ],
+     *       ]
+     *   );
+     *   $body = $response->getBody();
+     *   print_r(json_decode((string) $body));
+     * @apiSuccessExample {json} Response (example): 
+     *   {
+     *       "error": "Unauthorized"
+     *   }
      */
     public function showMe()
     {
