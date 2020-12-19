@@ -29,6 +29,7 @@ class EntityController extends Controller
      * @authenticated
      * @queryParam select A comma separated list of fields of the entity to include. It is possible to flat the properties json column using a dot syntax. Example: id,model,properties.price
      * @queryParam order-by A comma separated lis of fields to order by. Example: model,properties.price:desc,contents.title
+     * @queryParam where A comma separated list of conditions to met, Example: created_at>2020-01-01,properties.isImage,properties.format:png,model:medium
      * @queryParam of-model (filter) The name of the model the entities should be. Example: page
      * @queryParam only-published (filter) Get only published, not deleted entities, true if not set. Example: true
      * @queryParam child-of (filter) The id or short id of the entity the result entities should be child of. Example: home
@@ -60,6 +61,8 @@ class EntityController extends Controller
         $entities = $this->addSelects($entities, $request, $lang, $modelClassName);
         // Add relations
         $entities = $this->addRelations($entities, $request);
+        // Add wheres
+        $entities = $this->addWheres($entities, $request);
         // Orders by
         $entities = $entities->when($request->get('order-by'), function ($q) use ($request) {
             $orders = explode(",", $request->get('order-by'));
@@ -490,6 +493,37 @@ class EntityController extends Controller
             });
         return $query;
     }
+
+  /**
+   * Process the request to know for where query parameter and add the corresponding where statments
+   *
+   * @param $query
+   * @param $request
+   * @return mixed
+   */
+  private function addWheres($query, $request) {
+    // Selects
+    $query->when($request->get('where'), function ($q) use ($request) {
+      $wheres = explode(',', $request->get('where'));
+      foreach ($wheres as $where) {
+        preg_match('/(.*)(\:|\<\:|\>\:|\<|\>|\!\:)(.*)/', $where, $parts);
+        if (count($parts) === 4) {
+          $field = $parts[1];
+          $operator = $parts[2] ?? '=';
+          $value = $parts[3] ?? true;
+          if ($operator === ':') $operator = '=';
+        } else {
+          $field = $where;
+          $operator = '=';
+          $value = true;
+        }
+       $field = str_replace('properties.', 'properties->', $field);
+        $q->where($field, $operator, $value);
+      }
+      return $q;
+    });
+    return $query;
+  }
 
     /**
      * Process the request to know for relations query parameter and add the corresponding select statments
